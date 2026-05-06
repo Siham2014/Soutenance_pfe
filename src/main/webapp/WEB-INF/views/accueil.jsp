@@ -16,7 +16,10 @@
                 <div class="card-body">
                     
                     <a href="<%=request.getContextPath()%>/app?action=pageImportEncadrants" class="btn btn-danger">Repartition des encadrants </a>
-                    
+                    <a href="<%=request.getContextPath()%>/app?action=importerPlanning" 
+   class="btn btn-primary mt-2">
+   📅 Planning des Soutenances
+</a>
                 </div>
             </div>
         </div>
