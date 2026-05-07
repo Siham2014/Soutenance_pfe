@@ -46,6 +46,10 @@
 <body>
 
 <h2>Répartition des encadrants</h2>
+<a href="${pageContext.request.contextPath}/app?action=exportRepartitionExcel">
+    Exporter Excel
+</a>
+<br><br>
 
 <table>
     <tr>
