@@ -50,9 +50,7 @@ public class MainControllerServlet extends HttpServlet {
 
             repartitionService.repartirEncadrants();
 
-            request.setAttribute("message", "Répartition effectuée !");
-            request.getRequestDispatcher("/WEB-INF/views/accueil.jsp")
-                   .forward(request, response);
+            response.sendRedirect("app?action=voirRepartition");
             return;
         }
 
@@ -91,8 +89,23 @@ public class MainControllerServlet extends HttpServlet {
             return;
         }
 
-        // ── Page import planning (formulaire upload) ──────────
+        // ── Page import planning ──────────────────────────────
+        // ✅ Bloqué si la répartition n'a pas encore été faite
         else if ("importerPlanning".equals(action)) {
+
+            List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
+
+            if (groupes.isEmpty()) {
+                // Pas de répartition → retour accueil avec message erreur
+                List<GroupPfe> groupesVide = groupPfeDao.findAllWithDetails();
+                request.setAttribute("repartitionFaite", false);
+                request.setAttribute("message_erreur",
+                    "⚠️ Vous devez d'abord effectuer la répartition des encadrants avant de générer le planning !");
+                request.getRequestDispatcher("/WEB-INF/views/accueil.jsp")
+                       .forward(request, response);
+                return;
+            }
+
             request.getRequestDispatcher("/WEB-INF/views/importerPlanning.jsp")
                    .forward(request, response);
             return;
@@ -109,6 +122,10 @@ public class MainControllerServlet extends HttpServlet {
         }
 
         // ── Accueil par défaut ────────────────────────────────
+        // Vérifier si répartition existe pour activer/désactiver bouton planning
+        List<GroupPfe> groupesExistants = groupPfeDao.findAllWithDetails();
+        request.setAttribute("repartitionFaite", !groupesExistants.isEmpty());
+
         request.getRequestDispatcher("/WEB-INF/views/accueil.jsp")
                .forward(request, response);
     }
@@ -186,12 +203,24 @@ public class MainControllerServlet extends HttpServlet {
         // ── Import Excel planning + génération ────────────────
         else if ("genererPlanning".equals(action)) {
 
+            // ✅ Vérifier une dernière fois que la répartition existe
+            GroupPfeDao groupPfeDao = new GroupPfeDaoImpl();
+            List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
+            if (groupes.isEmpty()) {
+                request.setAttribute("repartitionFaite", false);
+                request.setAttribute("message_erreur",
+                    "⚠️ Répartition introuvable. Veuillez d'abord importer et répartir les encadrants.");
+                request.getRequestDispatcher("/WEB-INF/views/accueil.jsp")
+                       .forward(request, response);
+                return;
+            }
+
             Part filePart = request.getPart("fichierExcel");
 
             try (InputStream input = filePart.getInputStream();
                  Workbook workbook = WorkbookFactory.create(input)) {
 
-                // ✅ Vider salles et soutenances avant chaque génération
+                // Vider salles et soutenances avant chaque génération
                 SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
                 soutenanceDao.deleteAll();
 
