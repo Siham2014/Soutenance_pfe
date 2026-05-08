@@ -9,4 +9,5 @@ public interface GroupPfeDao {
     List<GroupPfe> findAllWithDetails() ;
     List<GroupPfe> findAllWithDetailsByVersion(Long versionId);
     void resetDatabase();
+    GroupPfe findByIdWithDetails(Long id);
 }

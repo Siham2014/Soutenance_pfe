@@ -6,95 +6,118 @@
 <head>
     <title>Répartition des encadrants</title>
 
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            font-family: Arial;
-        }
-
-        th, td {
-            border: 1px solid black;
-            padding: 6px;
-            text-align: center;
-        }
-
-        .header {
-            background-color: #00A9D6;
-            font-weight: bold;
-        }
-
-        .subheader {
-            background-color: #D9E2F3;
-            font-weight: bold;
-        }
-
-        .TDIA {
-            background-color: #F4B183;
-        }
-
-        .ID {
-            background-color: #B7E1CD;
-        }
-
-        .GI {
-            background-color: #B4C6E7;
-        }
-    </style>
+    <link rel="stylesheet"
+          href="<%=request.getContextPath()%>/static/css/bootstrap.min.css">
+ 
 </head>
 
 <body>
 
-<h2>Répartition des encadrants</h2>
-<a href="${pageContext.request.contextPath}/app?action=exportRepartitionExcel">
-    Exporter Excel
-</a>
-<br><br>
+<div class="container mt-4">
 
-<table>
-    <tr>
-        <th class="header" colspan="2">Encadrant</th>
-        <th class="header" colspan="8">Étudiants encadrés</th>
-    </tr>
+    <h2>Répartition des encadrants</h2>
 
-    <tr>
-        <th class="subheader">Nom</th>
-        <th class="subheader">Prénom</th>
+    <a class="btn btn-success btn-sm"
+       href="${pageContext.request.contextPath}/app?action=exportRepartitionExcel">
 
-        <th class="subheader" colspan="2">Étudiant 1</th>
-        <th class="subheader" colspan="2">Étudiant 2</th>
-        <th class="subheader" colspan="2">Étudiant 3</th>
-        <th class="subheader" colspan="2">Étudiant 4</th>
-    </tr>
+        Exporter Excel
+    </a>
 
-    <tr>
-        <th></th>
-        <th></th>
-        <th>Nom</th><th>Prénom</th>
-        <th>Nom</th><th>Prénom</th>
-        <th>Nom</th><th>Prénom</th>
-        <th>Nom</th><th>Prénom</th>
-    </tr>
+    <a class="btn btn-danger btn-sm"
+       href="${pageContext.request.contextPath}/app?action=exportRepartitionPdf">
 
-    <c:forEach var="entry" items="${repartition}">
-        <tr>
-            <td>${entry.key.nom}</td>
-            <td>${entry.key.prenom}</td>
+        Exporter PDF
+    </a>
 
-            <c:forEach begin="0" end="3" var="i">
-                <c:choose>
-                    <c:when test="${not empty entry.value[i]}">
-                        <td class="${entry.value[i].filiere}">${entry.value[i].nom}</td>
-                        <td class="${entry.value[i].filiere}">${entry.value[i].prenom}</td>
-                    </c:when>
-                    <c:otherwise>
-                        <td></td>
-                        <td></td>
-                    </c:otherwise>
-                </c:choose>
-            </c:forEach>
+    <a class="btn btn-primary btn-sm"
+       href="${pageContext.request.contextPath}/app?action=exportRepartitionWord">
+
+        Exporter Word
+    </a>
+
+    <br><br>
+
+    <table class="table table-bordered table-hover text-center">
+
+        <tr class="table-primary">
+            <th colspan="2">Encadrant</th>
+            <th colspan="8">Étudiants encadrés</th>
         </tr>
-    </c:forEach>
-</table>
+
+        <tr class="table-secondary">
+            <th>Nom</th>
+            <th>Prénom</th>
+
+            <th colspan="2">Étudiant 1</th>
+            <th colspan="2">Étudiant 2</th>
+            <th colspan="2">Étudiant 3</th>
+            <th colspan="2">Étudiant 4</th>
+        </tr>
+
+        <tr>
+            <th></th>
+            <th></th>
+
+            <th>Nom</th>
+            <th>Prénom</th>
+
+            <th>Nom</th>
+            <th>Prénom</th>
+
+            <th>Nom</th>
+            <th>Prénom</th>
+
+            <th>Nom</th>
+            <th>Prénom</th>
+        </tr>
+
+        <c:forEach var="entry" items="${repartition}">
+            <tr>
+
+                <td>${entry.key.nom}</td>
+                <td>${entry.key.prenom}</td>
+
+                <c:forEach begin="0" end="3" var="i">
+
+                    <c:choose>
+
+                        <c:when test="${not empty entry.value[i]}">
+
+							    <td class="
+							        ${entry.value[i].filiere == 'TDIA' ? 'table-warning' : ''}
+							        ${entry.value[i].filiere == 'ID' ? 'table-success' : ''}
+							        ${entry.value[i].filiere == 'GI' ? 'table-primary' : ''}
+							    ">
+							        ${entry.value[i].nom}
+							    </td>
+							
+							    <td class="
+							        ${entry.value[i].filiere == 'TDIA' ? 'table-warning' : ''}
+							        ${entry.value[i].filiere == 'ID' ? 'table-success' : ''}
+							        ${entry.value[i].filiere == 'GI' ? 'table-primary' : ''}
+							    ">
+							        ${entry.value[i].prenom}
+							    </td>
+
+</c:when>
+
+                        <c:otherwise>
+
+                            <td>-</td>
+                            <td>-</td>
+
+                        </c:otherwise>
+
+                    </c:choose>
+
+                </c:forEach>
+
+            </tr>
+        </c:forEach>
+
+    </table>
+
+</div>
 
 </body>
+</html>

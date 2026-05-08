@@ -93,6 +93,20 @@ public class GroupPfeDaoImpl implements GroupPfeDao {
         }
     }
     
+    @Override
+    public GroupPfe findByIdWithDetails(Long id) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery(
+                "select distinct g from GroupPfe g " +
+                "left join fetch g.encadrant " +
+                "left join fetch g.etudiants " +
+                "where g.id = :id",
+                GroupPfe.class
+            )
+            .setParameter("id", id)
+            .uniqueResult();
+        }
+    }
     
     
 }
