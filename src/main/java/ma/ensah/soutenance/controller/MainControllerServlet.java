@@ -8,12 +8,31 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+<<<<<<< HEAD
 
 import ma.ensah.soutenance.service.impl.genererPv;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.*;
+=======
+import ma.ensah.soutenance.service.impl.genererPv;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
 
 import com.lowagie.text.Document;
 import com.lowagie.text.PageSize;
@@ -219,8 +238,13 @@ public class MainControllerServlet extends HttpServlet {
             workbook.close();
             return;
         }
+        
+        else if ("exportRepartitionPdf".equals(action)) {
+
 
         else if ("exportRepartitionPdf".equals(action)) {
+
+
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
 
@@ -272,16 +296,27 @@ public class MainControllerServlet extends HttpServlet {
                 for (int i = 0; i < 4; i++) {
                     if (i < etudiants.size()) {
                         Etudiant e = etudiants.get(i);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
                         PdfPCell cellNom = new PdfPCell(new Phrase(e.getNom()));
                         PdfPCell cellPrenom = new PdfPCell(new Phrase(e.getPrenom()));
 
                         if ("GI".equalsIgnoreCase(e.getFiliere())) {
                             cellNom.setBackgroundColor(new java.awt.Color(180,198,231));
                             cellPrenom.setBackgroundColor(new java.awt.Color(180,198,231));
+<<<<<<< HEAD
                         } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
                             cellNom.setBackgroundColor(new java.awt.Color(183,225,205));
                             cellPrenom.setBackgroundColor(new java.awt.Color(183,225,205));
+=======
+
+                        } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setBackgroundColor(new java.awt.Color(183,225,205));
+                            cellPrenom.setBackgroundColor(new java.awt.Color(183,225,205));
+
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
                         } else if ("TDIA".equalsIgnoreCase(e.getFiliere())) {
                             cellNom.setBackgroundColor(new java.awt.Color(244,177,131));
                             cellPrenom.setBackgroundColor(new java.awt.Color(244,177,131));
@@ -300,7 +335,10 @@ public class MainControllerServlet extends HttpServlet {
             document.close();
             return;
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
         else if ("exportRepartitionWord".equals(action)) {
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
@@ -367,9 +405,17 @@ public class MainControllerServlet extends HttpServlet {
                         if ("GI".equalsIgnoreCase(e.getFiliere())) {
                             cellNom.setColor("B4C6E7");
                             cellPrenom.setColor("B4C6E7");
+<<<<<<< HEAD
                         } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
                             cellNom.setColor("B7E1CD");
                             cellPrenom.setColor("B7E1CD");
+=======
+
+                        } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setColor("B7E1CD");
+                            cellPrenom.setColor("B7E1CD");
+
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
                         } else if ("TDIA".equalsIgnoreCase(e.getFiliere())) {
                             cellNom.setColor("F4B183");
                             cellPrenom.setColor("F4B183");
@@ -388,7 +434,10 @@ public class MainControllerServlet extends HttpServlet {
             document.close();
             return;
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
         else if ("genererPv".equals(action)) {
 
             Long id = Long.parseLong(request.getParameter("id"));
@@ -404,15 +453,30 @@ public class MainControllerServlet extends HttpServlet {
 
             genererPv pvService = new genererPv();
             pvService.genererPv(response, groupe);
+<<<<<<< HEAD
             return;
         }
 
+=======
+
+            return;
+        }
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
         request.getRequestDispatcher("/WEB-INF/views/accueil.jsp")
                .forward(request, response);
     }
 
+<<<<<<< HEAD
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
+=======
+    private void genererPv(HttpServletResponse response, GroupPfe groupe) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+>>>>>>> 14a31c7e2cc39f13fbfccd5e71c7516759631355
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
