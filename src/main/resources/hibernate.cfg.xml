@@ -9,9 +9,11 @@
 
         <!-- Connexion MySQL -->
         <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
-        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/soutenance_pfe?useSSL=false&amp;serverTimezone=UTC</property>
+      <property name="hibernate.connection.url">
+    jdbc:mysql://localhost:3306/soutenance_pfe?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true
+</property>
         <property name="hibernate.connection.username">root</property>
-        <property name="hibernate.connection.password"></property>
+        <property name="hibernate.connection.password">Mysql123@@</property>
 
         <!-- Dialecte MySQL -->
         <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
@@ -28,6 +30,8 @@
         <mapping class="ma.ensah.soutenance.model.entity.Etudiant"/>
         <mapping class="ma.ensah.soutenance.model.entity.GroupPfe"/>
         <mapping class="ma.ensah.soutenance.model.entity.VersionRepartition"/>
+        <mapping class="ma.ensah.soutenance.model.entity.Salle"/>
+        <mapping class="ma.ensah.soutenance.model.entity.Soutenance"/>
         
         
     </session-factory>
