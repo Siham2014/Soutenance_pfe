@@ -16,7 +16,9 @@
                 <div class="card-body">
                     
                     <a href="<%=request.getContextPath()%>/app?action=pageImportEncadrants" class="btn btn-danger">Repartition des encadrants </a>
-                    
+                     <a href="${pageContext.request.contextPath}/app?action=genererPv&id=${g.id}">
+                           Générer PV
+                     </a>
                 </div>
             </div>
         </div>
