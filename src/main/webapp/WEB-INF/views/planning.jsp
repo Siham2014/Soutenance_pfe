@@ -16,6 +16,15 @@
         .filiere-TDIA { background-color: #F4B183; }
         .filiere-GI   { background-color: #B4C6E7; }
         .filiere-ID   { background-color: #B7E1CD; }
+        .btn-export {
+            background-color: #217346;
+            color: white;
+            border: none;
+        }
+        .btn-export:hover {
+            background-color: #1a5c38;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -24,6 +33,12 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>📅 Planning des Soutenances PFE</h2>
         <div>
+            <c:if test="${not empty planning}">
+                <a href="<%=request.getContextPath()%>/app?action=exportPlanning"
+                   class="btn btn-export me-2">
+                    📥 Exporter Excel
+                </a>
+            </c:if>
             <a href="<%=request.getContextPath()%>/app?action=voirRepartition"
                class="btn btn-outline-primary me-2">
                 👥 Voir Répartition

@@ -2,6 +2,7 @@ package ma.ensah.soutenance.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.servlet.ServletException;
@@ -9,10 +10,9 @@ import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.*;
 
 import ma.ensah.soutenance.model.dao.*;
 import ma.ensah.soutenance.model.dao.impl.*;
@@ -90,14 +90,11 @@ public class MainControllerServlet extends HttpServlet {
         }
 
         // ── Page import planning ──────────────────────────────
-        // ✅ Bloqué si la répartition n'a pas encore été faite
         else if ("importerPlanning".equals(action)) {
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
 
             if (groupes.isEmpty()) {
-                // Pas de répartition → retour accueil avec message erreur
-                List<GroupPfe> groupesVide = groupPfeDao.findAllWithDetails();
                 request.setAttribute("repartitionFaite", false);
                 request.setAttribute("message_erreur",
                     "⚠️ Vous devez d'abord effectuer la répartition des encadrants avant de générer le planning !");
@@ -121,8 +118,13 @@ public class MainControllerServlet extends HttpServlet {
             return;
         }
 
+        // ── Export planning Excel ─────────────────────────────
+        else if ("exportPlanning".equals(action)) {
+            exportPlanningExcel(request, response);
+            return;
+        }
+
         // ── Accueil par défaut ────────────────────────────────
-        // Vérifier si répartition existe pour activer/désactiver bouton planning
         List<GroupPfe> groupesExistants = groupPfeDao.findAllWithDetails();
         request.setAttribute("repartitionFaite", !groupesExistants.isEmpty());
 
@@ -203,7 +205,6 @@ public class MainControllerServlet extends HttpServlet {
         // ── Import Excel planning + génération ────────────────
         else if ("genererPlanning".equals(action)) {
 
-            // ✅ Vérifier une dernière fois que la répartition existe
             GroupPfeDao groupPfeDao = new GroupPfeDaoImpl();
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
             if (groupes.isEmpty()) {
@@ -220,7 +221,6 @@ public class MainControllerServlet extends HttpServlet {
             try (InputStream input = filePart.getInputStream();
                  Workbook workbook = WorkbookFactory.create(input)) {
 
-                // Vider salles et soutenances avant chaque génération
                 SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
                 soutenanceDao.deleteAll();
 
@@ -259,7 +259,6 @@ public class MainControllerServlet extends HttpServlet {
                     }
                 }
 
-                // Lancer algorithme planning
                 PlanningService planningService = new PlanningServiceImpl();
                 planningService.genererPlanning(creneaux, new ArrayList<>());
             }
@@ -270,4 +269,161 @@ public class MainControllerServlet extends HttpServlet {
 
         doGet(request, response);
     }
+
+    // =========================================================
+    //  Méthode privée — Export Excel du planning
+    // =========================================================
+    private void exportPlanningExcel(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        PlanningService planningService = new PlanningServiceImpl();
+        List<Soutenance> planning = planningService.getPlanning();
+
+        if (planning.isEmpty()) {
+            response.sendRedirect("app?action=voirPlanning");
+            return;
+        }
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("Planning Soutenances");
+
+        // ── Styles ────────────────────────────────────────────
+        XSSFCellStyle styleTitre  = buildTitleStyle(workbook);
+        XSSFCellStyle styleHeader = buildHeaderStyle(workbook);
+        XSSFCellStyle styleData   = buildDataStyle(workbook);
+        XSSFCellStyle styleTDIA   = buildFiliereStyle(workbook, styleData,
+                new byte[]{(byte)244, (byte)177, (byte)131});
+        XSSFCellStyle styleGI     = buildFiliereStyle(workbook, styleData,
+                new byte[]{(byte)180, (byte)198, (byte)231});
+        XSSFCellStyle styleID     = buildFiliereStyle(workbook, styleData,
+                new byte[]{(byte)183, (byte)225, (byte)205});
+
+        // ── Ligne titre ───────────────────────────────────────
+        Row rowTitre = sheet.createRow(0);
+        rowTitre.setHeightInPoints(28);
+        Cell cellTitre = rowTitre.createCell(0);
+        cellTitre.setCellValue("Planning des Soutenances PFE - ENSAH");
+        cellTitre.setCellStyle(styleTitre);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
+
+        // ── En-têtes colonnes ─────────────────────────────────
+        String[] headers = {
+            "Date", "Heure Début", "Heure Fin",
+            "Étudiant", "Filière", "Salle",
+            "Encadrant (Jury)", "Jury Informatique", "Jury Mathématiques"
+        };
+        Row rowHeader = sheet.createRow(1);
+        rowHeader.setHeightInPoints(20);
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = rowHeader.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(styleHeader);
+        }
+
+        // ── Données ───────────────────────────────────────────
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        int rowNum = 2;
+
+        for (Soutenance s : planning) {
+            Row row = sheet.createRow(rowNum++);
+            row.setHeightInPoints(18);
+
+            String filiere = s.getEtudiant().getFiliere();
+            XSSFCellStyle styleFiliere = "TDIA".equals(filiere) ? styleTDIA
+                                       : "GI".equals(filiere)   ? styleGI
+                                       : "ID".equals(filiere)   ? styleID
+                                       : styleData;
+
+            setCell(row, 0, s.getDateSoutenance() != null
+                    ? sdf.format(s.getDateSoutenance()) : "", styleData);
+            setCell(row, 1, s.getHeureDebut(),  styleData);
+            setCell(row, 2, s.getHeureFin(),    styleData);
+            setCell(row, 3, s.getEtudiant().getNom() + " " + s.getEtudiant().getPrenom(), styleFiliere);
+            setCell(row, 4, filiere,             styleFiliere);
+            setCell(row, 5, s.getSalle().getNom(), styleData);
+            setCell(row, 6, s.getEncadrant().getNom()  + " " + s.getEncadrant().getPrenom(),  styleData);
+            setCell(row, 7, s.getMembreInfo().getNom() + " " + s.getMembreInfo().getPrenom(), styleData);
+            setCell(row, 8, s.getMembreMath().getNom() + " " + s.getMembreMath().getPrenom(), styleData);
+        }
+
+        // ── Mise en forme finale ──────────────────────────────
+        int[] colWidths = {3200, 3000, 3000, 6000, 2500, 3000, 6000, 6000, 6000};
+        for (int i = 0; i < colWidths.length; i++) {
+            sheet.setColumnWidth(i, colWidths[i]);
+        }
+        sheet.createFreezePane(0, 2);
+        sheet.setAutoFilter(new CellRangeAddress(1, rowNum - 1, 0, 8));
+
+        // ── Réponse HTTP ──────────────────────────────────────
+        response.setContentType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition",
+            "attachment; filename=\"planning_soutenances.xlsx\"");
+
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
+
+    // ── Helpers cellule ───────────────────────────────────────
+
+    private void setCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value);
+        cell.setCellStyle(style);
+    }
+
+    // ── Helpers styles ────────────────────────────────────────
+
+    private XSSFCellStyle buildTitleStyle(XSSFWorkbook wb) {
+        XSSFCellStyle s = wb.createCellStyle();
+        XSSFFont f = wb.createFont();
+        f.setBold(true);
+        f.setFontHeightInPoints((short) 14);
+        f.setColor(IndexedColors.WHITE.getIndex());
+        s.setFont(f);
+        s.setFillForegroundColor(new XSSFColor(new byte[]{(byte)31,(byte)111,(byte)191}, null));
+        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        s.setAlignment(HorizontalAlignment.CENTER);
+        s.setVerticalAlignment(VerticalAlignment.CENTER);
+        return s;
+    }
+
+    private XSSFCellStyle buildHeaderStyle(XSSFWorkbook wb) {
+        XSSFCellStyle s = wb.createCellStyle();
+        XSSFFont f = wb.createFont();
+        f.setBold(true);
+        f.setColor(IndexedColors.WHITE.getIndex());
+        s.setFont(f);
+        s.setFillForegroundColor(new XSSFColor(new byte[]{(byte)31,(byte)111,(byte)191}, null));
+        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        s.setAlignment(HorizontalAlignment.CENTER);
+        s.setVerticalAlignment(VerticalAlignment.CENTER);
+        applyBorders(s);
+        return s;
+    }
+
+    private XSSFCellStyle buildDataStyle(XSSFWorkbook wb) {
+        XSSFCellStyle s = wb.createCellStyle();
+        s.setAlignment(HorizontalAlignment.CENTER);
+        s.setVerticalAlignment(VerticalAlignment.CENTER);
+        s.setWrapText(true);
+        applyBorders(s);
+        return s;
+    }
+
+    private XSSFCellStyle buildFiliereStyle(XSSFWorkbook wb, XSSFCellStyle base, byte[] rgb) {
+        XSSFCellStyle s = wb.createCellStyle();
+        s.cloneStyleFrom(base);
+        s.setFillForegroundColor(new XSSFColor(rgb, null));
+        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return s;
+    }
+
+    private void applyBorders(XSSFCellStyle s) {
+        s.setBorderBottom(BorderStyle.THIN);
+        s.setBorderTop(BorderStyle.THIN);
+        s.setBorderLeft(BorderStyle.THIN);
+        s.setBorderRight(BorderStyle.THIN);
+    }
 }
+
