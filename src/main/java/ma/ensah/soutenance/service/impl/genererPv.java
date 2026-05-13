@@ -1,5 +1,7 @@
 package ma.ensah.soutenance.service.impl;
+
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -10,103 +12,141 @@ import ma.ensah.soutenance.model.entity.*;
 
 public class genererPv {
 
-	
-	
+    public void genererPv(HttpServletResponse response, Soutenance s) throws IOException {
 
-	public void genererPv(HttpServletResponse response, GroupPfe groupe) throws IOException {
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=fiche_evaluation_pfe.pdf");
 
-	    response.setContentType("application/pdf");
-	    response.setHeader("Content-Disposition", "attachment; filename=pv_soutenance.pdf");
+        try {
+            Document document = new Document(PageSize.A4, 50, 50, 35, 35);
+            PdfWriter.getInstance(document, response.getOutputStream());
 
-	    try {
-	        Document document = new Document(PageSize.A4, 50, 50, 40, 40);
-	        PdfWriter.getInstance(document, response.getOutputStream());
+            document.open();
 
-	        document.open();
+            Font normal = new Font(Font.FontFamily.TIMES_ROMAN, 12);
+            Font bold = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.BOLD);
+            Font title = new Font(Font.FontFamily.TIMES_ROMAN, 14, Font.BOLD);
 
-	        Font normal = new Font(Font.FontFamily.TIMES_ROMAN, 12);
-	        Font bold = new Font(Font.FontFamily.TIMES_ROMAN, 12, Font.BOLD);
-	        Font title = new Font(Font.FontFamily.TIMES_ROMAN, 16, Font.BOLD);
+            Etudiant etudiant = s.getEtudiant();
+            Professeur encadrant = s.getEncadrant();
+            Professeur membreInfo = s.getMembreInfo();
+            Professeur membreMath = s.getMembreMath();
 
-	        Paragraph header = new Paragraph();
-	        header.setAlignment(Element.ALIGN_CENTER);
-	        header.add(new Phrase("Université Abdelmalek Essaadi\n", bold));
-	        header.add(new Phrase("Ecole National des sciences appliquée\n", bold));
-	        header.add(new Phrase("Département Informatique\n\n", bold));
-	        document.add(header);
+            Paragraph p;
 
-	        Paragraph titre = new Paragraph("PROCÈS-VERBAL DE SOUTENANCE", title);
-	        titre.setAlignment(Element.ALIGN_CENTER);
-	        titre.setSpacingAfter(20);
-	        document.add(titre);
+            p = new Paragraph("UNIVERSITE ABDELMALEK ESSAADI", bold);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
 
-	        Professeur encadrant = groupe.getEncadrant();
+            p = new Paragraph("Ecole Nationale des Sciences Appliquées d’Al-Hoceima - Maroc", normal);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
 
-	        document.add(new Paragraph("Encadrant :", bold));
-	        document.add(new Paragraph(
-	            "Nom : " + encadrant.getNom() +
-	            "        Prénom : " + encadrant.getPrenom(),
-	            normal
-	        ));
+            document.add(new Paragraph(" "));
 
-	        document.add(new Paragraph("\nÉtudiant(s) :", bold));
+            p = new Paragraph("Département de Mathématiques et Informatique", normal);
+            p.setAlignment(Element.ALIGN_LEFT);
+            document.add(p);
 
-	        for (Etudiant e : groupe.getEtudiants()) {
-	            document.add(new Paragraph(
-	                "Nom : " + e.getNom() +
-	                "        Prénom : " + e.getPrenom() +
-	                "        Filière : " + e.getFiliere(),
-	                normal
-	            ));
-	        }
+            p = new Paragraph("Fiche d’évaluation du Projet de Fin d’Étude", title);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
 
-	        document.add(new Paragraph("\nProjet :", bold));
-	        document.add(new Paragraph("Titre du PFE : ............................................................", normal));
+            p = new Paragraph("Année Universitaire : 2023-2024", bold);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
 
-	        document.add(new Paragraph("\nSoutenance :", bold));
-	        document.add(new Paragraph("Date : .........................        Heure : .........................", normal));
-	        document.add(new Paragraph("Salle : .................................................................", normal));
+            document.add(new Paragraph("\n"));
 
-	        document.add(new Paragraph("\nJury :", bold));
-	        document.add(new Paragraph("Jury 1 : .............................................................", normal));
-	        document.add(new Paragraph("Jury 2: .............................................................", normal));
-	        document.add(new Paragraph("Jury 3: .............................................................", normal));
+            document.add(new Paragraph("Nom - Prénom de l’élève ingénieur :", bold));
+            document.add(new Paragraph("• " + etudiant.getNom() + " " + etudiant.getPrenom(), normal));
 
+            document.add(new Paragraph("Filière : " + etudiant.getFiliere(), normal));
 
-	        document.add(new Paragraph("Encadrant : " + encadrant.getNom() + " " + encadrant.getPrenom(), normal));
+            document.add(new Paragraph("Intitulé du rapport :", bold));
+            document.add(new Paragraph("• .................................................................", normal));
 
-	        document.add(new Paragraph("\nRésultat :", bold));
-	        document.add(new Paragraph("Note : ......................... /20", normal));
-	        document.add(new Paragraph("Mention : ...............................................................", normal));
+            document.add(new Paragraph("L'encadrant(e) interne :", bold));
+            document.add(new Paragraph("• Pr. " + encadrant.getNom() + " " + encadrant.getPrenom(), normal));
 
-	        document.add(new Paragraph("\nObservations :", bold));
-	        document.add(new Paragraph("..........................................................................", normal));
-	        document.add(new Paragraph("..........................................................................", normal));
-	        document.add(new Paragraph("..........................................................................", normal));
+            document.add(new Paragraph("Membres du jury :", bold));
 
-	        document.add(new Paragraph("\n\nSignatures :", bold));
+            document.add(juryLine("Pr. " + membreInfo.getNom() + " " + membreInfo.getPrenom(), "Président"));
+            document.add(juryLine("Pr. " + membreMath.getNom() + " " + membreMath.getPrenom(), "Rapporteur"));
+            document.add(juryLine("Pr. " + encadrant.getNom() + " " + encadrant.getPrenom(), "Rapporteur"));
 
-	        PdfPTable table = new PdfPTable(4);
-	        table.setWidthPercentage(100);
-	        table.addCell(getSignatureCell("Jury 1"));
-	        table.addCell(getSignatureCell("Jury 2"));
-	        table.addCell(getSignatureCell("Jury 3"));
-	        table.addCell(getSignatureCell("Encadrant"));
+            document.add(new Paragraph("\n"));
 
-	        document.add(table);
+            document.add(new Paragraph("Note du Contenu (En prenant en compte l’appréciation de l’entreprise)", bold));
+            document.add(new Paragraph("C = ", normal));
 
-	        document.close();
+            document.add(new Paragraph("\nNote du Mémoire", bold));
+            document.add(new Paragraph("M = ", normal));
 
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	}
+            document.add(new Paragraph("\nNote de la Soutenance", bold));
+            document.add(new Paragraph("S = ", normal));
 
-	private PdfPCell getSignatureCell(String text) {
-	    PdfPCell cell = new PdfPCell(new Phrase(text));
-	    cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-	    cell.setBorder(Rectangle.NO_BORDER);
-	    cell.setPaddingTop(30);
-	    return cell;
-	}
+            document.add(new Paragraph("\n"));
+
+            p = new Paragraph("MOYENNE", bold);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
+
+            p = new Paragraph("Moyenne = C * 0,5 + M * 0,2 + S * 0,3 = ", normal);
+            p.setAlignment(Element.ALIGN_CENTER);
+            document.add(p);
+
+            document.add(new Paragraph("\n\n"));
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            document.add(new Paragraph("Le : " + sdf.format(s.getDateSoutenance()), normal));
+
+            document.add(new Paragraph("\n"));
+            document.add(new Paragraph("Signature des membres du jury :", bold));
+            document.add(new Paragraph("\n\n"));
+
+            PdfPTable table = new PdfPTable(3);
+            table.setWidthPercentage(100);
+
+            table.addCell(getSignatureCell("Pr. " + membreInfo.getNom()));
+            table.addCell(getSignatureCell("Pr. " + membreMath.getNom()));
+            table.addCell(getSignatureCell("Pr. " + encadrant.getNom()));
+
+            document.add(table);
+
+            document.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private PdfPTable juryLine(String nomProf, String role) throws DocumentException {
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{70, 30});
+
+        PdfPCell cell1 = new PdfPCell(new Phrase("• " + nomProf));
+        cell1.setBorder(Rectangle.NO_BORDER);
+        cell1.setPaddingLeft(25);
+
+        PdfPCell cell2 = new PdfPCell(new Phrase(role));
+        cell2.setBorder(Rectangle.NO_BORDER);
+
+        table.addCell(cell1);
+        table.addCell(cell2);
+
+        return table;
+    }
+
+    private PdfPCell getSignatureCell(String text) {
+
+        PdfPCell cell = new PdfPCell(new Phrase(text));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setPaddingTop(30);
+
+        return cell;
+    }
 }

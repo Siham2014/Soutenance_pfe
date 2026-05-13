@@ -386,21 +386,38 @@ public class MainControllerServlet extends HttpServlet {
             return;
         } else if ("genererPv".equals(action)) {
 
-            Long id = Long.parseLong(request.getParameter("id"));
-            GroupPfe groupe = groupPfeDao.findByIdWithDetails(id);
+            String idParam = request.getParameter("id");
 
-            if (groupe == null) {
-                request.setAttribute("message", "Groupe introuvable");
-                request.getRequestDispatcher("/WEB-INF/views/accueil.jsp")
-                       .forward(request, response);
+            if (idParam == null || idParam.trim().isEmpty()) {
+
+                response.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "ID soutenance manquant"
+                );
+
                 return;
             }
 
-            genererPv pvService = new genererPv();
-            pvService.genererPv(response, groupe);
-            return;
-        }
+            Long id = Long.parseLong(idParam);
+            SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+            Soutenance s = soutenanceDao.findById(id);
 
+           
+
+            if (s == null) {
+
+                response.sendError(
+                    HttpServletResponse.SC_NOT_FOUND,
+                    "Soutenance introuvable"
+                );
+
+                return;
+            }
+
+            genererPv pv = new genererPv();
+
+            pv.genererPv(response, s);
+        }
         // ── Accueil par défaut ────────────────────────────────
         // Vérifier si répartition existe pour activer/désactiver bouton planning
         List<GroupPfe> groupesExistants = groupPfeDao.findAllWithDetails();

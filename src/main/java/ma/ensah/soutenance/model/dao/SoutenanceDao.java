@@ -7,6 +7,7 @@ import java.util.List;
 public interface SoutenanceDao {
     void save(Soutenance soutenance);
     List<Soutenance> findAll();
+    Soutenance findById(Long id);
     void deleteAll();
     boolean isSalleOccupee(Long salleId, Date date, String heureDebut);
     boolean isProfOccupe(Long profId, Date date, String heureDebut);
