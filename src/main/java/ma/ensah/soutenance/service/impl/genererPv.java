@@ -71,9 +71,20 @@ public class genererPv {
 
             document.add(new Paragraph("Membres du jury :", bold));
 
-            document.add(juryLine("Pr. " + membreInfo.getNom() + " " + membreInfo.getPrenom(), "Président"));
-            document.add(juryLine("Pr. " + membreMath.getNom() + " " + membreMath.getPrenom(), "Rapporteur"));
-            document.add(juryLine("Pr. " + encadrant.getNom() + " " + encadrant.getPrenom(), "Rapporteur"));
+            document.add(juryLine(
+            	    "Pr. " + encadrant.getNom() + " " + encadrant.getPrenom(),
+            	    "Président"
+            	));
+
+            	document.add(juryLine(
+            	    "Pr. " + membreInfo.getNom() + " " + membreInfo.getPrenom(),
+            	    "Rapporteur"
+            	));
+
+            	document.add(juryLine(
+            	    "Pr. " + membreMath.getNom() + " " + membreMath.getPrenom(),
+            	    "Rapporteur"
+            	));
 
             document.add(new Paragraph("\n"));
 
@@ -108,9 +119,9 @@ public class genererPv {
             PdfPTable table = new PdfPTable(3);
             table.setWidthPercentage(100);
 
+            table.addCell(getSignatureCell("Pr. " + encadrant.getNom()));
             table.addCell(getSignatureCell("Pr. " + membreInfo.getNom()));
             table.addCell(getSignatureCell("Pr. " + membreMath.getNom()));
-            table.addCell(getSignatureCell("Pr. " + encadrant.getNom()));
 
             document.add(table);
 
