@@ -416,8 +416,77 @@ public class MainControllerServlet extends HttpServlet {
 
             genererPv pv = new genererPv();
 
-            pv.genererPv(response, s);
+            pv.genererPv(response,s);
         }
+        
+        else if ("listePv".equals(action)) {
+
+            SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+
+            List<Soutenance> soutenances = soutenanceDao.findAll();
+
+            Map<Professeur, List<Soutenance>> pvParProf = new LinkedHashMap<>();
+
+            for (Soutenance s : soutenances) {
+                Professeur encadrant = s.getEncadrant();
+
+                if (!pvParProf.containsKey(encadrant)) {
+                    pvParProf.put(encadrant, new ArrayList<Soutenance>());
+                }
+
+                pvParProf.get(encadrant).add(s);
+            }
+
+            String profIdParam = request.getParameter("profId");
+
+            if (profIdParam != null && !profIdParam.trim().isEmpty()) {
+                Long profId = Long.parseLong(profIdParam);
+                request.setAttribute("profIdSelectionne", profId);
+            }
+
+            request.setAttribute("pvParProf", pvParProf);
+
+            request.getRequestDispatcher("/WEB-INF/views/pvpage.jsp")
+                   .forward(request, response);
+
+            return;
+        }
+        
+        if ("importPv".equals(action)) {
+
+            Part fichier = request.getPart("fichierPv");
+
+            // ici tu lis le fichier Excel
+            // puis tu récupères les soutenances depuis la base
+
+            SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+
+            List<Soutenance> soutenances = soutenanceDao.findAll();
+
+            Map<Professeur, List<Soutenance>> pvParProf = new LinkedHashMap<>();
+
+            for (Soutenance s : soutenances) {
+
+                Professeur encadrant = s.getEncadrant();
+
+                if (!pvParProf.containsKey(encadrant)) {
+                    pvParProf.put(encadrant, new ArrayList<Soutenance>());
+                }
+
+                pvParProf.get(encadrant).add(s);
+            }
+
+            request.setAttribute("pvParProf", pvParProf);
+
+            request.getRequestDispatcher("/WEB-INF/views/pvpage.jsp")
+                   .forward(request, response);
+
+            return;
+        }
+        
+        
+        
+        
         // ── Accueil par défaut ────────────────────────────────
         // Vérifier si répartition existe pour activer/désactiver bouton planning
         List<GroupPfe> groupesExistants = groupPfeDao.findAllWithDetails();

@@ -44,11 +44,11 @@ public class genererPv {
 
             document.add(new Paragraph(" "));
 
-            p = new Paragraph("Département de Mathématiques et Informatique", normal);
-            p.setAlignment(Element.ALIGN_LEFT);
+            p = new Paragraph("Département de Mathématiques et Informatique", title);
+            p.setAlignment(Element.ALIGN_CENTER);
             document.add(p);
 
-            p = new Paragraph("Fiche d’évaluation du Projet de Fin d’Étude", title);
+            p = new Paragraph("Fiche d’évaluation du Projet de Fin d’Étude", bold);
             p.setAlignment(Element.ALIGN_CENTER);
             document.add(p);
 
@@ -59,55 +59,77 @@ public class genererPv {
             document.add(new Paragraph("\n"));
 
             document.add(new Paragraph("Nom - Prénom de l’élève ingénieur :", bold));
+            
             document.add(new Paragraph("• " + etudiant.getNom() + " " + etudiant.getPrenom(), normal));
+            document.add(new Paragraph("\n"));
 
-            document.add(new Paragraph("Filière : " + etudiant.getFiliere(), normal));
+            document.add(new Paragraph("Filière : " + etudiant.getFiliere(), bold));
+          
 
             document.add(new Paragraph("Intitulé du rapport :", bold));
             document.add(new Paragraph("• .................................................................", normal));
+            document.add(new Paragraph("\n"));
 
             document.add(new Paragraph("L'encadrant(e) interne :", bold));
             document.add(new Paragraph("• Pr. " + encadrant.getNom() + " " + encadrant.getPrenom(), normal));
 
+            document.add(new Paragraph("\n"));
             document.add(new Paragraph("Membres du jury :", bold));
+            
 
             document.add(juryLine(
             	    "Pr. " + encadrant.getNom() + " " + encadrant.getPrenom(),
             	    "Président"
             	));
+            document.add(new Paragraph("\n"));
 
             	document.add(juryLine(
             	    "Pr. " + membreInfo.getNom() + " " + membreInfo.getPrenom(),
             	    "Rapporteur"
             	));
 
+            	document.add(new Paragraph("\n"));
             	document.add(juryLine(
             	    "Pr. " + membreMath.getNom() + " " + membreMath.getPrenom(),
             	    "Rapporteur"
             	));
-
+            	
             document.add(new Paragraph("\n"));
 
-            document.add(new Paragraph("Note du Contenu (En prenant en compte l’appréciation de l’entreprise)", bold));
+            Paragraph p1 = new Paragraph();
+
+            p1.add(new Chunk("Note du Contenu ", bold));
+            
+
+            p1.add(new Chunk(
+                "(En prenant en compte l’appréciation de l’entreprise)",
+                normal
+            ));
+
+            document.add(p1);
+            
             document.add(new Paragraph("C = ", normal));
 
             document.add(new Paragraph("\nNote du Mémoire", bold));
+           ;
             document.add(new Paragraph("M = ", normal));
+            
 
             document.add(new Paragraph("\nNote de la Soutenance", bold));
+            
             document.add(new Paragraph("S = ", normal));
 
             document.add(new Paragraph("\n"));
 
-            p = new Paragraph("MOYENNE", bold);
-            p.setAlignment(Element.ALIGN_CENTER);
-            document.add(p);
+            p1 = new Paragraph("MOYENNE", bold);
+            p1.setAlignment(Element.ALIGN_CENTER);
+            document.add(p1);
 
-            p = new Paragraph("Moyenne = C * 0,5 + M * 0,2 + S * 0,3 = ", normal);
-            p.setAlignment(Element.ALIGN_CENTER);
-            document.add(p);
+            p1 = new Paragraph("Moyenne = C * 0,5 + M * 0,2 + S * 0,3 = ", normal);
+            p1.setAlignment(Element.ALIGN_CENTER);
+            document.add(p1);
 
-            document.add(new Paragraph("\n\n"));
+      
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             document.add(new Paragraph("Le : " + sdf.format(s.getDateSoutenance()), normal));
@@ -160,4 +182,6 @@ public class genererPv {
 
         return cell;
     }
+
+	
 }

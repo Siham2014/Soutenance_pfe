@@ -68,7 +68,7 @@ public class SoutenanceDaoImpl implements SoutenanceDao {
         }
     }
 
-    // ✅ Contrainte 1 : salle pas occupée au même créneau
+    //  Contrainte 1 : salle pas occupée au même créneau
     @Override
     public boolean isSalleOccupee(Long salleId, Date date, String heureDebut) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

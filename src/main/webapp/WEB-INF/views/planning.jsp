@@ -31,8 +31,9 @@
             <a href="<%=request.getContextPath()%>/app" class="btn btn-secondary">
                 ← Retour Accueil
             </a>
-            <a class="btn btn-danger btn-sm"
-   href="${pageContext.request.contextPath}/app?action=genererPv&id=${s.id}">
+        <a class="btn btn-primary"
+   href="${pageContext.request.contextPath}/app?action=listePv">
+
     Générer PV
 </a>
         </div>
