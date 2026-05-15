@@ -46,6 +46,11 @@
             <a href="<%=request.getContextPath()%>/app" class="btn btn-secondary">
                 ← Retour Accueil
             </a>
+        <a class="btn btn-primary"
+   href="${pageContext.request.contextPath}/app?action=listePv">
+
+    Générer PV
+</a>
         </div>
     </div>
 
@@ -54,7 +59,8 @@
             Total : <strong>${planning.size()}</strong> soutenance(s) planifiée(s)
         </p>
     </c:if>
-
+ 
+ 
     <div class="table-responsive">
     <table class="table table-bordered table-hover table-sm">
         <thead>
@@ -98,6 +104,7 @@
             <a href="<%=request.getContextPath()%>/app?action=importerPlanning">
                 Importer un fichier Excel
             </a>
+            
         </div>
     </c:if>
 

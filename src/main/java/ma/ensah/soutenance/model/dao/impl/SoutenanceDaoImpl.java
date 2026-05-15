@@ -68,7 +68,7 @@ public class SoutenanceDaoImpl implements SoutenanceDao {
         }
     }
 
-    // ✅ Contrainte 1 : salle pas occupée au même créneau
+    //  Contrainte 1 : salle pas occupée au même créneau
     @Override
     public boolean isSalleOccupee(Long salleId, Date date, String heureDebut) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -129,6 +129,26 @@ public class SoutenanceDaoImpl implements SoutenanceDao {
                 .list();
         } catch (Exception e) {
             return new ArrayList<>();
+        }
+    }
+    @Override
+    public Soutenance findById(Long id) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery(
+                "select s from Soutenance s " +
+                "left join fetch s.etudiant " +
+                "left join fetch s.encadrant " +
+                "left join fetch s.membreInfo " +
+                "left join fetch s.membreMath " +
+                "left join fetch s.salle " +
+                "where s.id = :id",
+                Soutenance.class
+            )
+            .setParameter("id", id)
+            .uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

@@ -2,7 +2,6 @@ package ma.ensah.soutenance.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.servlet.ServletException;
@@ -10,9 +9,10 @@ import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import ma.ensah.soutenance.model.dao.*;
 import ma.ensah.soutenance.model.dao.impl.*;
@@ -20,6 +20,19 @@ import ma.ensah.soutenance.model.entity.*;
 import ma.ensah.soutenance.service.*;
 import ma.ensah.soutenance.service.impl.*;
 import ma.ensah.soutenance.algorithm.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.*;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+
+import ma.ensah.soutenance.service.impl.genererPv;
 
 @MultipartConfig
 @WebServlet("/app")
@@ -90,11 +103,14 @@ public class MainControllerServlet extends HttpServlet {
         }
 
         // ── Page import planning ──────────────────────────────
+        // ✅ Bloqué si la répartition n'a pas encore été faite
         else if ("importerPlanning".equals(action)) {
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
 
             if (groupes.isEmpty()) {
+                // Pas de répartition → retour accueil avec message erreur
+               
                 request.setAttribute("repartitionFaite", false);
                 request.setAttribute("message_erreur",
                     "⚠️ Vous devez d'abord effectuer la répartition des encadrants avant de générer le planning !");
@@ -116,15 +132,363 @@ public class MainControllerServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/planning.jsp")
                    .forward(request, response);
             return;
-        }
+        }else if ("exportRepartitionExcel".equals(action)) {
 
-        // ── Export planning Excel ─────────────────────────────
-        else if ("exportPlanning".equals(action)) {
-            exportPlanningExcel(request, response);
+            List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
+            Map<Professeur, List<Etudiant>> repartition = new LinkedHashMap<>();
+
+            for (GroupPfe g : groupes) {
+                Professeur prof = g.getEncadrant();
+                if (!repartition.containsKey(prof)) {
+                    repartition.put(prof, new ArrayList<Etudiant>());
+                }
+                repartition.get(prof).addAll(g.getEtudiants());
+            }
+
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=repartition_encadrants.xlsx");
+
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("Répartition");
+
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Encadrant Nom");
+            header.createCell(1).setCellValue("Encadrant Prénom");
+            header.createCell(2).setCellValue("Etudiant 1 Nom");
+            header.createCell(3).setCellValue("Etudiant 1 Prénom");
+            header.createCell(4).setCellValue("Etudiant 2 Nom");
+            header.createCell(5).setCellValue("Etudiant 2 Prénom");
+            header.createCell(6).setCellValue("Etudiant 3 Nom");
+            header.createCell(7).setCellValue("Etudiant 3 Prénom");
+            header.createCell(8).setCellValue("Etudiant 4 Nom");
+            header.createCell(9).setCellValue("Etudiant 4 Prénom");
+
+            CellStyle styleTDIA = workbook.createCellStyle();
+            styleTDIA.setFillForegroundColor(IndexedColors.LIGHT_ORANGE.getIndex());
+            styleTDIA.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle styleGI = workbook.createCellStyle();
+            styleGI.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            styleGI.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle styleID = workbook.createCellStyle();
+            styleID.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            styleID.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            int rowIndex = 1;
+
+            for (Map.Entry<Professeur, List<Etudiant>> entry : repartition.entrySet()) {
+                Row row = sheet.createRow(rowIndex++);
+
+                Professeur prof = entry.getKey();
+                List<Etudiant> etudiants = entry.getValue();
+
+                row.createCell(0).setCellValue(prof.getNom());
+                row.createCell(1).setCellValue(prof.getPrenom());
+
+                int col = 2;
+
+                for (int i = 0; i < 4; i++) {
+                    if (i < etudiants.size()) {
+                        Etudiant e = etudiants.get(i);
+
+                        Cell cellNom = row.createCell(col);
+                        Cell cellPrenom = row.createCell(col + 1);
+
+                        cellNom.setCellValue(e.getNom());
+                        cellPrenom.setCellValue(e.getPrenom());
+
+                        CellStyle style = null;
+
+                        if ("TDIA".equalsIgnoreCase(e.getFiliere())) {
+                            style = styleTDIA;
+                        } else if ("GI".equalsIgnoreCase(e.getFiliere())) {
+                            style = styleGI;
+                        } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
+                            style = styleID;
+                        }
+
+                        if (style != null) {
+                            cellNom.setCellStyle(style);
+                            cellPrenom.setCellStyle(style);
+                        }
+                    } else {
+                        row.createCell(col).setCellValue("");
+                        row.createCell(col + 1).setCellValue("");
+                    }
+
+                    col += 2;
+                }
+            }
+
+            for (int i = 0; i <= 9; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(response.getOutputStream());
+            workbook.close();
             return;
         }
+        else if ("exportRepartitionPdf".equals(action)) {
 
+            List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
+            Map<Professeur, List<Etudiant>> repartition = new LinkedHashMap<>();
+
+            for (GroupPfe g : groupes) {
+                Professeur prof = g.getEncadrant();
+                if (!repartition.containsKey(prof)) {
+                    repartition.put(prof, new ArrayList<Etudiant>());
+                }
+                repartition.get(prof).addAll(g.getEtudiants());
+            }
+
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=repartition_encadrants.pdf");
+
+            Document document = new Document(PageSize.A4.rotate());
+            PdfWriter.getInstance(document, response.getOutputStream());
+
+            document.open();
+            document.add(new Paragraph("Répartition des encadrants"));
+            document.add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(10);
+            table.setWidthPercentage(100);
+
+            table.addCell("Encadrant Nom");
+            table.addCell("Encadrant Prénom");
+            table.addCell("Etudiant 1 Nom");
+            table.addCell("Etudiant 1 Prénom");
+            table.addCell("Etudiant 2 Nom");
+            table.addCell("Etudiant 2 Prénom");
+            table.addCell("Etudiant 3 Nom");
+            table.addCell("Etudiant 3 Prénom");
+            table.addCell("Etudiant 4 Nom");
+            table.addCell("Etudiant 4 Prénom");
+
+            for (Map.Entry<Professeur, List<Etudiant>> entry : repartition.entrySet()) {
+                Professeur prof = entry.getKey();
+                List<Etudiant> etudiants = entry.getValue();
+
+                table.addCell(prof.getNom());
+                table.addCell(prof.getPrenom());
+
+                for (int i = 0; i < 4; i++) {
+                    if (i < etudiants.size()) {
+                        Etudiant e = etudiants.get(i);
+
+                        PdfPCell cellNom = new PdfPCell(new Phrase(e.getNom()));
+                        PdfPCell cellPrenom = new PdfPCell(new Phrase(e.getPrenom()));
+
+                        if ("GI".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setBackgroundColor(new java.awt.Color(180,198,231));
+                            cellPrenom.setBackgroundColor(new java.awt.Color(180,198,231));
+                        } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setBackgroundColor(new java.awt.Color(183,225,205));
+                            cellPrenom.setBackgroundColor(new java.awt.Color(183,225,205));
+                        } else if ("TDIA".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setBackgroundColor(new java.awt.Color(244,177,131));
+                            cellPrenom.setBackgroundColor(new java.awt.Color(244,177,131));
+                        }
+
+                        table.addCell(cellNom);
+                        table.addCell(cellPrenom);
+                    } else {
+                        table.addCell("");
+                        table.addCell("");
+                    }
+                }
+            }
+
+            document.add(table);
+            document.close();
+            return;
+        } else if ("exportRepartitionWord".equals(action)) {
+
+            List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
+            Map<Professeur, List<Etudiant>> repartition = new LinkedHashMap<>();
+
+            for (GroupPfe g : groupes) {
+                Professeur prof = g.getEncadrant();
+                if (!repartition.containsKey(prof)) {
+                    repartition.put(prof, new ArrayList<Etudiant>());
+                }
+                repartition.get(prof).addAll(g.getEtudiants());
+            }
+
+            response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            response.setHeader("Content-Disposition", "attachment; filename=repartition_encadrants.docx");
+
+            XWPFDocument document = new XWPFDocument();
+
+            XWPFParagraph title = document.createParagraph();
+            XWPFRun run = title.createRun();
+            run.setText("Répartition des encadrants");
+            run.setBold(true);
+            run.setFontSize(16);
+
+            XWPFTable table = document.createTable();
+
+            XWPFTableRow header = table.getRow(0);
+            header.getCell(0).setText("Encadrant Nom");
+            header.addNewTableCell().setText("Encadrant Prénom");
+            header.addNewTableCell().setText("Etudiant 1 Nom");
+            header.addNewTableCell().setText("Etudiant 1 Prénom");
+            header.addNewTableCell().setText("Etudiant 2 Nom");
+            header.addNewTableCell().setText("Etudiant 2 Prénom");
+            header.addNewTableCell().setText("Etudiant 3 Nom");
+            header.addNewTableCell().setText("Etudiant 3 Prénom");
+            header.addNewTableCell().setText("Etudiant 4 Nom");
+            header.addNewTableCell().setText("Etudiant 4 Prénom");
+
+            for (Map.Entry<Professeur, List<Etudiant>> entry : repartition.entrySet()) {
+                Professeur prof = entry.getKey();
+                List<Etudiant> etudiants = entry.getValue();
+
+                XWPFTableRow row = table.createRow();
+
+                row.getCell(0).setText(prof.getNom());
+                row.getCell(1).setText(prof.getPrenom());
+
+                int col = 2;
+
+                for (int i = 0; i < 4; i++) {
+                    if (i < etudiants.size()) {
+                        Etudiant e = etudiants.get(i);
+
+                        XWPFTableCell cellNom = row.getCell(col);
+                        XWPFTableCell cellPrenom = row.getCell(col + 1);
+
+                        cellNom.setText(e.getNom());
+                        cellPrenom.setText(e.getPrenom());
+
+                        if ("GI".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setColor("B4C6E7");
+                            cellPrenom.setColor("B4C6E7");
+                        } else if ("ID".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setColor("B7E1CD");
+                            cellPrenom.setColor("B7E1CD");
+                        } else if ("TDIA".equalsIgnoreCase(e.getFiliere())) {
+                            cellNom.setColor("F4B183");
+                            cellPrenom.setColor("F4B183");
+                        }
+                    } else {
+                        row.getCell(col).setText("");
+                        row.getCell(col + 1).setText("");
+                    }
+
+                    col += 2;
+                }
+            }
+
+            document.write(response.getOutputStream());
+            document.close();
+            return;
+        } else if ("genererPv".equals(action)) {
+
+            String idParam = request.getParameter("id");
+
+            if (idParam == null || idParam.trim().isEmpty()) {
+
+                response.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "ID soutenance manquant"
+                );
+
+                return;
+            }
+
+            Long id = Long.parseLong(idParam);
+            SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+            Soutenance s = soutenanceDao.findById(id);
+
+           
+
+            if (s == null) {
+
+                response.sendError(
+                    HttpServletResponse.SC_NOT_FOUND,
+                    "Soutenance introuvable"
+                );
+
+                return;
+            }
+
+            genererPv pv = new genererPv();
+
+            pv.genererPv(response,s);
+        }
+        
+        else if ("listePv".equals(action)) {
+
+            SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+
+            List<Soutenance> soutenances = soutenanceDao.findAll();
+
+            Map<Professeur, List<Soutenance>> pvParProf = new LinkedHashMap<>();
+
+            for (Soutenance s : soutenances) {
+                Professeur encadrant = s.getEncadrant();
+
+                if (!pvParProf.containsKey(encadrant)) {
+                    pvParProf.put(encadrant, new ArrayList<Soutenance>());
+                }
+
+                pvParProf.get(encadrant).add(s);
+            }
+
+            String profIdParam = request.getParameter("profId");
+
+            if (profIdParam != null && !profIdParam.trim().isEmpty()) {
+                Long profId = Long.parseLong(profIdParam);
+                request.setAttribute("profIdSelectionne", profId);
+            }
+
+            request.setAttribute("pvParProf", pvParProf);
+
+            request.getRequestDispatcher("/WEB-INF/views/pvpage.jsp")
+                   .forward(request, response);
+
+            return;
+        }
+        
+        if ("importPv".equals(action)) {
+
+            Part fichier = request.getPart("fichierPv");
+
+            // ici tu lis le fichier Excel
+            // puis tu récupères les soutenances depuis la base
+
+            SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+
+            List<Soutenance> soutenances = soutenanceDao.findAll();
+
+            Map<Professeur, List<Soutenance>> pvParProf = new LinkedHashMap<>();
+
+            for (Soutenance s : soutenances) {
+
+                Professeur encadrant = s.getEncadrant();
+
+                if (!pvParProf.containsKey(encadrant)) {
+                    pvParProf.put(encadrant, new ArrayList<Soutenance>());
+                }
+
+                pvParProf.get(encadrant).add(s);
+            }
+
+            request.setAttribute("pvParProf", pvParProf);
+
+            request.getRequestDispatcher("/WEB-INF/views/pvpage.jsp")
+                   .forward(request, response);
+
+            return;
+        }
+        
+        
+        
+        
         // ── Accueil par défaut ────────────────────────────────
+        // Vérifier si répartition existe pour activer/désactiver bouton planning
         List<GroupPfe> groupesExistants = groupPfeDao.findAllWithDetails();
         request.setAttribute("repartitionFaite", !groupesExistants.isEmpty());
 
@@ -205,6 +569,7 @@ public class MainControllerServlet extends HttpServlet {
         // ── Import Excel planning + génération ────────────────
         else if ("genererPlanning".equals(action)) {
 
+            // ✅ Vérifier une dernière fois que la répartition existe
             GroupPfeDao groupPfeDao = new GroupPfeDaoImpl();
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
             if (groupes.isEmpty()) {
@@ -221,6 +586,7 @@ public class MainControllerServlet extends HttpServlet {
             try (InputStream input = filePart.getInputStream();
                  Workbook workbook = WorkbookFactory.create(input)) {
 
+                // Vider salles et soutenances avant chaque génération
                 SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
                 soutenanceDao.deleteAll();
 
@@ -259,6 +625,7 @@ public class MainControllerServlet extends HttpServlet {
                     }
                 }
 
+                // Lancer algorithme planning
                 PlanningService planningService = new PlanningServiceImpl();
                 planningService.genererPlanning(creneaux, new ArrayList<>());
             }
@@ -269,161 +636,4 @@ public class MainControllerServlet extends HttpServlet {
 
         doGet(request, response);
     }
-
-    // =========================================================
-    //  Méthode privée — Export Excel du planning
-    // =========================================================
-    private void exportPlanningExcel(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-
-        PlanningService planningService = new PlanningServiceImpl();
-        List<Soutenance> planning = planningService.getPlanning();
-
-        if (planning.isEmpty()) {
-            response.sendRedirect("app?action=voirPlanning");
-            return;
-        }
-
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet("Planning Soutenances");
-
-        // ── Styles ────────────────────────────────────────────
-        XSSFCellStyle styleTitre  = buildTitleStyle(workbook);
-        XSSFCellStyle styleHeader = buildHeaderStyle(workbook);
-        XSSFCellStyle styleData   = buildDataStyle(workbook);
-        XSSFCellStyle styleTDIA   = buildFiliereStyle(workbook, styleData,
-                new byte[]{(byte)244, (byte)177, (byte)131});
-        XSSFCellStyle styleGI     = buildFiliereStyle(workbook, styleData,
-                new byte[]{(byte)180, (byte)198, (byte)231});
-        XSSFCellStyle styleID     = buildFiliereStyle(workbook, styleData,
-                new byte[]{(byte)183, (byte)225, (byte)205});
-
-        // ── Ligne titre ───────────────────────────────────────
-        Row rowTitre = sheet.createRow(0);
-        rowTitre.setHeightInPoints(28);
-        Cell cellTitre = rowTitre.createCell(0);
-        cellTitre.setCellValue("Planning des Soutenances PFE - ENSAH");
-        cellTitre.setCellStyle(styleTitre);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
-
-        // ── En-têtes colonnes ─────────────────────────────────
-        String[] headers = {
-            "Date", "Heure Début", "Heure Fin",
-            "Étudiant", "Filière", "Salle",
-            "Encadrant (Jury)", "Jury Informatique", "Jury Mathématiques"
-        };
-        Row rowHeader = sheet.createRow(1);
-        rowHeader.setHeightInPoints(20);
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = rowHeader.createCell(i);
-            cell.setCellValue(headers[i]);
-            cell.setCellStyle(styleHeader);
-        }
-
-        // ── Données ───────────────────────────────────────────
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        int rowNum = 2;
-
-        for (Soutenance s : planning) {
-            Row row = sheet.createRow(rowNum++);
-            row.setHeightInPoints(18);
-
-            String filiere = s.getEtudiant().getFiliere();
-            XSSFCellStyle styleFiliere = "TDIA".equals(filiere) ? styleTDIA
-                                       : "GI".equals(filiere)   ? styleGI
-                                       : "ID".equals(filiere)   ? styleID
-                                       : styleData;
-
-            setCell(row, 0, s.getDateSoutenance() != null
-                    ? sdf.format(s.getDateSoutenance()) : "", styleData);
-            setCell(row, 1, s.getHeureDebut(),  styleData);
-            setCell(row, 2, s.getHeureFin(),    styleData);
-            setCell(row, 3, s.getEtudiant().getNom() + " " + s.getEtudiant().getPrenom(), styleFiliere);
-            setCell(row, 4, filiere,             styleFiliere);
-            setCell(row, 5, s.getSalle().getNom(), styleData);
-            setCell(row, 6, s.getEncadrant().getNom()  + " " + s.getEncadrant().getPrenom(),  styleData);
-            setCell(row, 7, s.getMembreInfo().getNom() + " " + s.getMembreInfo().getPrenom(), styleData);
-            setCell(row, 8, s.getMembreMath().getNom() + " " + s.getMembreMath().getPrenom(), styleData);
-        }
-
-        // ── Mise en forme finale ──────────────────────────────
-        int[] colWidths = {3200, 3000, 3000, 6000, 2500, 3000, 6000, 6000, 6000};
-        for (int i = 0; i < colWidths.length; i++) {
-            sheet.setColumnWidth(i, colWidths[i]);
-        }
-        sheet.createFreezePane(0, 2);
-        sheet.setAutoFilter(new CellRangeAddress(1, rowNum - 1, 0, 8));
-
-        // ── Réponse HTTP ──────────────────────────────────────
-        response.setContentType(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition",
-            "attachment; filename=\"planning_soutenances.xlsx\"");
-
-        workbook.write(response.getOutputStream());
-        workbook.close();
-    }
-
-    // ── Helpers cellule ───────────────────────────────────────
-
-    private void setCell(Row row, int col, String value, CellStyle style) {
-        Cell cell = row.createCell(col);
-        cell.setCellValue(value);
-        cell.setCellStyle(style);
-    }
-
-    // ── Helpers styles ────────────────────────────────────────
-
-    private XSSFCellStyle buildTitleStyle(XSSFWorkbook wb) {
-        XSSFCellStyle s = wb.createCellStyle();
-        XSSFFont f = wb.createFont();
-        f.setBold(true);
-        f.setFontHeightInPoints((short) 14);
-        f.setColor(IndexedColors.WHITE.getIndex());
-        s.setFont(f);
-        s.setFillForegroundColor(new XSSFColor(new byte[]{(byte)31,(byte)111,(byte)191}, null));
-        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        s.setAlignment(HorizontalAlignment.CENTER);
-        s.setVerticalAlignment(VerticalAlignment.CENTER);
-        return s;
-    }
-
-    private XSSFCellStyle buildHeaderStyle(XSSFWorkbook wb) {
-        XSSFCellStyle s = wb.createCellStyle();
-        XSSFFont f = wb.createFont();
-        f.setBold(true);
-        f.setColor(IndexedColors.WHITE.getIndex());
-        s.setFont(f);
-        s.setFillForegroundColor(new XSSFColor(new byte[]{(byte)31,(byte)111,(byte)191}, null));
-        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        s.setAlignment(HorizontalAlignment.CENTER);
-        s.setVerticalAlignment(VerticalAlignment.CENTER);
-        applyBorders(s);
-        return s;
-    }
-
-    private XSSFCellStyle buildDataStyle(XSSFWorkbook wb) {
-        XSSFCellStyle s = wb.createCellStyle();
-        s.setAlignment(HorizontalAlignment.CENTER);
-        s.setVerticalAlignment(VerticalAlignment.CENTER);
-        s.setWrapText(true);
-        applyBorders(s);
-        return s;
-    }
-
-    private XSSFCellStyle buildFiliereStyle(XSSFWorkbook wb, XSSFCellStyle base, byte[] rgb) {
-        XSSFCellStyle s = wb.createCellStyle();
-        s.cloneStyleFrom(base);
-        s.setFillForegroundColor(new XSSFColor(rgb, null));
-        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        return s;
-    }
-
-    private void applyBorders(XSSFCellStyle s) {
-        s.setBorderBottom(BorderStyle.THIN);
-        s.setBorderTop(BorderStyle.THIN);
-        s.setBorderLeft(BorderStyle.THIN);
-        s.setBorderRight(BorderStyle.THIN);
-    }
 }
-
