@@ -98,15 +98,24 @@
     </table>
     </div>
 
-    <c:if test="${empty planning}">
-        <div class="alert alert-warning mt-3">
-            ⚠️ Aucune soutenance planifiée.
-            <a href="<%=request.getContextPath()%>/app?action=importerPlanning">
-                Importer un fichier Excel
-            </a>
-            
-        </div>
-    </c:if>
+  <c:if test="${not empty planning}">
+    
+    <a href="<%=request.getContextPath()%>/app?action=exportPlanning"
+       class="btn btn-export me-2">
+        📥 Exporter Excel
+    </a>
+
+    <a href="<%=request.getContextPath()%>/app?action=exportPlanningPdf"
+       class="btn btn-danger me-2">
+        📄 Exporter PDF
+    </a>
+
+    <a href="<%=request.getContextPath()%>/app?action=exportPlanningWord"
+       class="btn btn-primary me-2">
+        📝 Exporter Word
+    </a>
+
+</c:if>
 
 </div>
 </body>

@@ -25,6 +25,15 @@
         <div class="alert alert-success text-center">${message}</div>
     </c:if>
 
+    <!-- Bouton Dashboard -->
+    <div class="text-center mb-4">
+        <a href="<%=request.getContextPath()%>/app?action=dashboard"
+           class="btn btn-dark btn-lg px-5 py-3"
+           style="border-radius:12px; background:linear-gradient(135deg,#2d3436,#636e72); border:none; box-shadow:0 4px 14px rgba(0,0,0,.2);">
+            📊 Tableau de Bord — Statistiques
+        </a>
+    </div>
+
     <div class="row justify-content-center g-4">
 
         <!-- Répartition encadrants -->
@@ -35,11 +44,11 @@
                 <p class="text-muted">Importer un fichier Excel et générer la répartition automatique</p>
                 <a href="<%=request.getContextPath()%>/app?action=pageImportEncadrants"
                    class="btn btn-danger btn-action mt-2">
-                     Importer & Répartir
+                    📂 Importer & Répartir
                 </a>
                 <a href="<%=request.getContextPath()%>/app?action=voirRepartition"
                    class="btn btn-outline-danger btn-action mt-2">
-                     Voir Répartition
+                    👁 Voir Répartition
                 </a>
             </div>
         </div>
@@ -52,29 +61,14 @@
                 <p class="text-muted">Générer automatiquement le planning avec jury et salles</p>
                 <a href="<%=request.getContextPath()%>/app?action=importerPlanning"
                    class="btn btn-primary btn-action mt-2">
-                     Générer le Planning
+                    📂 Générer le Planning
                 </a>
                 <a href="<%=request.getContextPath()%>/app?action=voirPlanning"
                    class="btn btn-outline-primary btn-action mt-2">
-                     Voir Planning
+                    👁 Voir Planning
                 </a>
             </div>
         </div>
-        
-      <form action="${pageContext.request.contextPath}/app?action=importPv"
-      method="post"
-      enctype="multipart/form-data">
-
-    <input type="file" name="fichierPv" class="form-control" required>
-
-    <button type="submit" class="btn btn-primary mt-2">
-        Générer PV
-    </button>
-
-</form>
-        
-        
-        
 
     </div>
 </div>
