@@ -100,20 +100,21 @@
 
   <c:if test="${not empty planning}">
     
-    <a href="<%=request.getContextPath()%>/app?action=exportPlanning"
+    <a href="<%=request.getContextPath()%>/app?action=exportExcel&type=planning"
        class="btn btn-export me-2">
         📥 Exporter Excel
     </a>
 
-    <a href="<%=request.getContextPath()%>/app?action=exportPlanningPdf"
+    <a href="<%=request.getContextPath()%>/app?action=exportPdf&type=planning"
        class="btn btn-danger me-2">
         📄 Exporter PDF
     </a>
 
-    <a href="<%=request.getContextPath()%>/app?action=exportPlanningWord"
+    <a href="<%=request.getContextPath()%>/app?action=exportWord&type=planning"
        class="btn btn-primary me-2">
         📝 Exporter Word
     </a>
+        
 
 </c:if>
 

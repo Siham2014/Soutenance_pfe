@@ -42,20 +42,20 @@
 
     <br><br>
 
-    <a class="btn btn-success btn-sm"
-       href="${pageContext.request.contextPath}/app?action=exportRepartitionExcel">
-        Exporter Excel
-    </a>
+    <a class="btn btn-success"
+   href="${pageContext.request.contextPath}/app?action=exportRepartitionExcel">
+    Exporter Excel
+</a>
 
-    <a class="btn btn-danger btn-sm"
-       href="${pageContext.request.contextPath}/app?action=exportRepartitionPdf">
-        Exporter PDF
-    </a>
+<a class="btn btn-danger"
+   href="${pageContext.request.contextPath}/app?action=exportRepartitionPdf">
+    Exporter PDF
+</a>
 
-    <a class="btn btn-primary btn-sm"
-       href="${pageContext.request.contextPath}/app?action=exportRepartitionWord">
-        Exporter Word
-    </a>
+<a class="btn btn-primary"
+   href="${pageContext.request.contextPath}/app?action=exportRepartitionWord">
+    Exporter Word
+</a>
 
     <br><br>
 
