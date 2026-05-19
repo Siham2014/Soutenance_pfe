@@ -9,157 +9,170 @@
     <link rel="stylesheet" href="<%=request.getContextPath()%>/static/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        :root {
-            --primary:   #c0392b;
-            --primary-lt:#f9e8e7;
-            --accent:    #2980b9;
-            --accent-lt: #e8f4fb;
-            --green:     #27ae60;
-            --orange:    #e67e22;
-            --purple:    #8e44ad;
-            --bg:        #f0f2f5;
-            --card-shadow: 0 4px 20px rgba(0,0,0,.08);
-        }
-        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; }
+       body {
+    background: #f4f6f9;
+    font-family: 'Segoe UI', sans-serif;
+}
 
-        /* ── Topbar ─────────────────────────────── */
-        .topbar {
-            background: linear-gradient(135deg, var(--primary) 0%, #922b21 100%);
-            color: #fff;
-            padding: 18px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,.2);
-        }
-        .topbar h1 { font-size: 1.4rem; margin: 0; font-weight: 700; letter-spacing:.5px; }
-        .topbar .back-btn {
-            background: rgba(255,255,255,.15);
-            border: 1px solid rgba(255,255,255,.4);
-            color: #fff;
-            border-radius: 8px;
-            padding: 6px 16px;
-            text-decoration: none;
-            font-size: .9rem;
-            transition: background .2s;
-        }
-        .topbar .back-btn:hover { background: rgba(255,255,255,.25); color:#fff; }
+/* TOPBAR MODERNE */
+.topbar {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+}
 
-        /* ── KPI cards ──────────────────────────── */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 18px;
-            padding: 28px 28px 0;
-        }
-        .kpi-card {
-            background: #fff;
-            border-radius: 14px;
-            padding: 22px 20px;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .kpi-card::before {
-            content: '';
-            position: absolute; top:0; left:0; right:0; height:4px;
-            background: var(--kpi-color, var(--primary));
-        }
-        .kpi-icon { font-size: 2.2rem; margin-bottom: 6px; }
-        .kpi-value { font-size: 2.4rem; font-weight: 800; color: var(--kpi-color, var(--primary)); line-height: 1; }
-        .kpi-label { font-size: .85rem; color: #6c757d; margin-top: 4px; font-weight: 500; }
+.topbar h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+}
 
-        /* ── Chart grid ─────────────────────────── */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-            gap: 20px;
-            padding: 20px 28px 28px;
-        }
-        .chart-card {
-            background: #fff;
-            border-radius: 14px;
-            padding: 22px 20px 18px;
-            box-shadow: var(--card-shadow);
-        }
-        .chart-card.full-width { grid-column: 1 / -1; }
-        .chart-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #2d3436;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .chart-subtitle { font-size: .8rem; color: #95a5a6; margin-bottom: 14px; }
-        .chart-wrap { position: relative; height: 280px; }
-        .chart-wrap.tall { height: 350px; }
+.back-btn {
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: .9rem;
+    transition: 0.3s;
+}
 
-        /* ── Table stats ─────────────────────────── */
-        .stat-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-        .stat-table th {
-            background: #f8f9fa;
-            padding: 9px 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #495057;
-            border-bottom: 2px solid #dee2e6;
-        }
-        .stat-table td { padding: 8px 12px; border-bottom: 1px solid #f1f3f4; color: #343a40; }
-        .stat-table tr:last-child td { border-bottom: none; }
-        .stat-table tr:hover td { background: #fafbfc; }
-        .badge-count {
-            background: var(--primary-lt);
-            color: var(--primary);
-            border-radius: 20px;
-            padding: 2px 10px;
-            font-weight: 700;
-            font-size: .82rem;
-        }
-        .no-data { text-align:center; color:#adb5bd; padding:40px; font-size:.9rem; }
+.back-btn:hover {
+    background: rgba(255,255,255,.2);
+}
 
-        /* ── Progress bar ────────────────────────── */
-        .prog-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-        .prog-label { min-width:130px; font-size:.82rem; color:#495057; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .prog-bar-wrap { flex:1; background:#f0f0f0; border-radius:20px; height:12px; overflow:hidden; }
-        .prog-bar { height:100%; border-radius:20px; transition:width .6s; }
-        .prog-val { min-width:28px; text-align:right; font-size:.8rem; font-weight:700; color:#495057; }
+/* KPI SECTION */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 16px;
+    padding: 25px;
+}
+
+.kpi-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,.06);
+    transition: 0.3s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+}
+
+.kpi-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.kpi-label {
+    font-size: .85rem;
+    color: #6b7280;
+}
+
+/* CHART CARDS */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 18px;
+    padding: 0 25px 25px;
+}
+
+.chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 25px rgba(0,0,0,.06);
+    transition: 0.3s;
+}
+
+.chart-card:hover {
+    transform: translateY(-3px);
+}
+
+.chart-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.chart-subtitle {
+    font-size: .8rem;
+    color: #9ca3af;
+    margin-bottom: 10px;
+}
+
+/* TABLE */
+.stat-table th {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.stat-table td {
+    color: #111827;
+}
+
+.badge-count {
+    background: #eef2ff;
+    color: #3730a3;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+/* PROGRESS */
+.prog-bar-wrap {
+    background: #e5e7eb;
+    height: 10px;
+    border-radius: 999px;
+}
+
+.prog-bar {
+    height: 100%;
+    border-radius: 999px;
+}
     </style>
 </head>
 <body>
 
 <%-- ── Topbar ─────────────────────────────────────────── --%>
 <div class="topbar">
-    <h1>📊 Tableau de Bord — Gestion des Soutenances PFE</h1>
+    <h1> Tableau de Bord — Gestion des Soutenances PFE</h1>
     <a href="<%=request.getContextPath()%>/app" class="back-btn">← Accueil</a>
 </div>
 
 <%-- ── KPI Cards ───────────────────────────────────────── --%>
 <div class="kpi-grid">
     <div class="kpi-card" style="--kpi-color:var(--primary)">
-        <div class="kpi-icon">🎓</div>
+        <div class="kpi-icon"></div>
         <div class="kpi-value">${statsGlobales.totalEtudiants != null ? statsGlobales.totalEtudiants : 0}</div>
         <div class="kpi-label">Étudiants</div>
     </div>
     <div class="kpi-card" style="--kpi-color:var(--accent)">
-        <div class="kpi-icon">👨‍🏫</div>
+        <div class="kpi-icon"></div>
         <div class="kpi-value">${statsGlobales.totalProfesseurs != null ? statsGlobales.totalProfesseurs : 0}</div>
         <div class="kpi-label">Professeurs</div>
     </div>
     <div class="kpi-card" style="--kpi-color:var(--green)">
-        <div class="kpi-icon">📋</div>
+        <div class="kpi-icon"></div>
         <div class="kpi-value">${statsGlobales.totalSoutenances != null ? statsGlobales.totalSoutenances : 0}</div>
         <div class="kpi-label">Soutenances planifiées</div>
     </div>
     <div class="kpi-card" style="--kpi-color:var(--orange)">
-        <div class="kpi-icon">🏛️</div>
+        <div class="kpi-icon"></div>
         <div class="kpi-value">${statsGlobales.totalSalles != null ? statsGlobales.totalSalles : 0}</div>
         <div class="kpi-label">Salles disponibles</div>
     </div>
     <div class="kpi-card" style="--kpi-color:var(--purple)">
-        <div class="kpi-icon">📚</div>
+        <div class="kpi-icon"></div>
         <div class="kpi-value">${fn:length(nbSoutenancesParFiliere)}</div>
         <div class="kpi-label">Filières</div>
     </div>
@@ -170,7 +183,7 @@
 
     <%-- 1. Étudiants encadrés par professeur --%>
     <div class="chart-card">
-        <div class="chart-title">👨‍🏫 Étudiants encadrés par professeur</div>
+        <div class="chart-title"> Étudiants encadrés par professeur</div>
         <div class="chart-subtitle">Répartition des groupes PFE</div>
         <c:choose>
             <c:when test="${not empty nbEtudiantsParEncadrant}">
@@ -186,7 +199,7 @@
 
     <%-- 2. Soutenances par filière --%>
     <div class="chart-card">
-        <div class="chart-title">🎓 Soutenances par filière</div>
+        <div class="chart-title"> Soutenances par filière</div>
         <div class="chart-subtitle">Nombre de soutenances planifiées par filière</div>
         <c:choose>
             <c:when test="${not empty nbSoutenancesParFiliere}">
@@ -202,7 +215,7 @@
 
     <%-- 3. Soutenances par professeur (encadrant) --%>
     <div class="chart-card full-width">
-        <div class="chart-title">📋 Charge par professeur — Soutenances encadrées</div>
+        <div class="chart-title"> Charge par professeur — Soutenances encadrées</div>
         <div class="chart-subtitle">Nombre de soutenances où le professeur est encadrant principal</div>
         <c:choose>
             <c:when test="${not empty nbSoutenancesParProf}">
@@ -218,7 +231,7 @@
 
     <%-- 4. Soutenances par date (timeline) --%>
     <div class="chart-card full-width">
-        <div class="chart-title">📅 Calendrier des soutenances</div>
+        <div class="chart-title"> Calendrier des soutenances</div>
         <div class="chart-subtitle">Nombre de soutenances par journée</div>
         <c:choose>
             <c:when test="${not empty nbSoutenancesParJour}">
@@ -234,7 +247,7 @@
 
     <%-- 5. Étudiants par filière (doughnut) --%>
     <div class="chart-card">
-        <div class="chart-title">🎓 Répartition des étudiants par filière</div>
+        <div class="chart-title"> Répartition des étudiants par filière</div>
         <div class="chart-subtitle">Proportion par filière</div>
         <c:choose>
             <c:when test="${not empty nbEtudiantsParFiliere}">
@@ -250,7 +263,7 @@
 
     <%-- 6. Spécialités des professeurs (pie) --%>
     <div class="chart-card">
-        <div class="chart-title">🔬 Spécialités des professeurs</div>
+        <div class="chart-title"> Spécialités des professeurs</div>
         <div class="chart-subtitle">Répartition Informatique / Mathématiques</div>
         <c:choose>
             <c:when test="${not empty specialitesProf}">
@@ -266,7 +279,7 @@
 
     <%-- 7. Charge jury par professeur (barre horizontale) --%>
     <div class="chart-card full-width">
-        <div class="chart-title">⚖️ Charge jury par professeur</div>
+        <div class="chart-title"> Charge jury par professeur</div>
         <div class="chart-subtitle">Nombre de participations en tant que membre du jury (membreInfo + membreMath)</div>
         <c:choose>
             <c:when test="${not empty chargeJuryParProf}">
@@ -297,7 +310,7 @@
 
     <%-- 8. Soutenances par salle --%>
     <div class="chart-card">
-        <div class="chart-title">🏛️ Utilisation des salles</div>
+        <div class="chart-title"> Utilisation des salles</div>
         <div class="chart-subtitle">Nombre de soutenances par salle</div>
         <c:choose>
             <c:when test="${not empty nbSoutenancesParSalle}">
@@ -313,7 +326,7 @@
 
     <%-- 9. Tableau récapitulatif des profs --%>
     <div class="chart-card">
-        <div class="chart-title">📊 Récapitulatif — Charge des professeurs</div>
+        <div class="chart-title"> Récapitulatif — Charge des professeurs</div>
         <div class="chart-subtitle">Vue combinée : étudiants encadrés + soutenances</div>
         <div style="max-height:320px;overflow-y:auto;">
             <c:choose>

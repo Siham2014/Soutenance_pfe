@@ -154,6 +154,8 @@ public class MainControllerServlet extends HttpServlet {
                    .forward(request, response);
             return;
         }
+        
+  
 
         // ── Voir planning généré ──────────────────────────────
         else if ("voirPlanning".equals(action)) {
