@@ -89,7 +89,7 @@ public class SoutenanceDaoImpl implements SoutenanceDao {
         }
     }
 
-    // ✅ Contrainte 2 : prof pas occupé au même créneau
+    // Contrainte 2 : prof pas occupé au même créneau
     @Override
     public boolean isProfOccupe(Long profId, Date date, String heureDebut) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -112,7 +112,7 @@ public class SoutenanceDaoImpl implements SoutenanceDao {
         }
     }
 
-    // ✅ Contrainte 3 : soutenances du prof pour vérifier 1h de repos
+    //  Contrainte 3 : soutenances du prof pour vérifier 1h de repos
     @Override
     public List<Soutenance> findByProf(Long profId, Date date) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -149,6 +149,37 @@ public class SoutenanceDaoImpl implements SoutenanceDao {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+        
+    }
+    @Override
+    public List<Soutenance> findByEtudiantAndDate(
+            String nomEtudiant,
+            Date dateSoutenance) {
+
+        try(Session session =
+                HibernateUtil.getSessionFactory().openSession()) {
+
+            return session.createQuery(
+
+                "select s from Soutenance s " +
+                "where lower(s.etudiant.nom) = :nom " +
+                "and s.dateSoutenance = :date",
+
+                Soutenance.class
+            )
+
+            .setParameter("nom",
+                    nomEtudiant.toLowerCase())
+
+            .setParameter("date",
+                    dateSoutenance)
+
+            .list();
+
+        } catch(Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 }

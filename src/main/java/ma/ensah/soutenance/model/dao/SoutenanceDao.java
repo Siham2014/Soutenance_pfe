@@ -12,4 +12,8 @@ public interface SoutenanceDao {
     boolean isSalleOccupee(Long salleId, Date date, String heureDebut);
     boolean isProfOccupe(Long profId, Date date, String heureDebut);
     List<Soutenance> findByProf(Long profId, Date date);
+    List<Soutenance> findByEtudiantAndDate(
+            String nomEtudiant,
+            Date dateSoutenance
+    );
 }

@@ -157,7 +157,12 @@ public class MainControllerServlet extends HttpServlet {
         
   
 
-        // ── Voir planning généré ──────────────────────────────
+        // ── Page import planning PV ───────────────────────────
+        else if ("importerPlanningPv".equals(action)) {
+            request.getRequestDispatcher("/WEB-INF/views/importerPlanningPv.jsp")
+                   .forward(request, response);
+            return;
+        }
         else if ("voirPlanning".equals(action)) {
             PlanningService planningService = new PlanningServiceImpl();
             List<Soutenance> planning = planningService.getPlanning();
@@ -1137,7 +1142,129 @@ public class MainControllerServlet extends HttpServlet {
             return;
         }
 
-        doGet(request, response);
+        // ── Import planning Excel exporté → PV ───────────────
+        else if ("importerPlanningEtGenererPv".equals(action)) {
+
+            Part filePart = request.getPart("fichierPlanningExcel");
+
+            if (filePart == null || filePart.getSize() == 0) {
+                request.setAttribute("erreur", "Veuillez sélectionner un fichier Excel valide.");
+                request.getRequestDispatcher("/WEB-INF/views/importerPlanningPv.jsp")
+                       .forward(request, response);
+                return;
+            }
+
+            try (InputStream input = filePart.getInputStream();
+                 Workbook workbook = WorkbookFactory.create(input)) {
+
+                Sheet sheet = workbook.getSheet("Planning Soutenances");
+
+                if (sheet == null) {
+                    request.setAttribute("erreur",
+                        "Feuille 'Planning Soutenances' introuvable. Vérifiez que le fichier est bien un planning exporté.");
+                    request.getRequestDispatcher("/WEB-INF/views/importerPlanningPv.jsp")
+                           .forward(request, response);
+                    return;
+                }
+
+                // Charger toutes les soutenances en base
+                SoutenanceDao soutenanceDao = new SoutenanceDaoImpl();
+                List<Soutenance> toutesLesSoutenances = soutenanceDao.findAll();
+
+                // Indexer par nom étudiant (nom+prenom) en minuscules pour recherche rapide
+                Map<String, Soutenance> indexEtudiant = new java.util.HashMap<>();
+                for (Soutenance s : toutesLesSoutenances) {
+                    String cle = (s.getEtudiant().getNom() + " " + s.getEtudiant().getPrenom()).toLowerCase().trim();
+                    indexEtudiant.put(cle, s);
+                    // Aussi indexer nom seul au cas où
+                    indexEtudiant.put(s.getEtudiant().getNom().toLowerCase().trim(), s);
+                }
+
+                // Lire le fichier Excel exporté.
+                // Ligne 0 = titre, ligne 1 = sous-titre, ligne 2 = en-tête colonnes, lignes 3+ = données
+                // Colonnes : 0=Date, 1=Heure Début, 2=Heure Fin, 3=Étudiant (Nom Prénom),
+                //            4=Filière, 5=Salle, 6=Encadrant, 7=Jury Info, 8=Jury Math
+                List<Soutenance> soutenancesFromPlanning = new ArrayList<>();
+
+                // Trouver la ligne d'en-tête (chercher la cellule "Date")
+                int dataStartRow = 3; // Par défaut après titre, sous-titre, en-tête
+                for (int r = 0; r <= Math.min(5, sheet.getLastRowNum()); r++) {
+                    Row row = sheet.getRow(r);
+                    if (row != null) {
+                        Cell cell0 = row.getCell(0);
+                        if (cell0 != null) {
+                            String val = "";
+                            if (cell0.getCellType() == org.apache.poi.ss.usermodel.CellType.STRING) {
+                                val = cell0.getStringCellValue().trim();
+                            }
+                            if ("Date".equalsIgnoreCase(val)) {
+                                dataStartRow = r + 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                for (int i = dataStartRow; i <= sheet.getLastRowNum(); i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    Cell cellEtudiant = row.getCell(3);
+                    if (cellEtudiant == null) continue;
+
+                    String nomEtudiantCell = "";
+                    if (cellEtudiant.getCellType() == org.apache.poi.ss.usermodel.CellType.STRING) {
+                        nomEtudiantCell = cellEtudiant.getStringCellValue().trim();
+                    }
+                    if (nomEtudiantCell.isEmpty()) continue;
+
+                    // Chercher la soutenance correspondante
+                    String cleLookup = nomEtudiantCell.toLowerCase().trim();
+                    Soutenance s = indexEtudiant.get(cleLookup);
+
+                    // Si pas trouvé, essayer avec juste le premier mot (nom)
+                    if (s == null) {
+                        String[] parts = cleLookup.split("\\s+");
+                        if (parts.length > 0) {
+                            s = indexEtudiant.get(parts[0]);
+                        }
+                    }
+
+                    if (s != null && !soutenancesFromPlanning.contains(s)) {
+                        soutenancesFromPlanning.add(s);
+                    }
+                }
+
+                if (soutenancesFromPlanning.isEmpty()) {
+                    // Aucune correspondance : utiliser toutes les soutenances en base
+                    soutenancesFromPlanning = toutesLesSoutenances;
+                }
+
+                // Construire la map pvParProf à partir des soutenances trouvées
+                Map<Professeur, List<Soutenance>> pvParProf = new java.util.LinkedHashMap<>();
+                for (Soutenance s : soutenancesFromPlanning) {
+                    Professeur encadrant = s.getEncadrant();
+                    if (!pvParProf.containsKey(encadrant)) {
+                        pvParProf.put(encadrant, new ArrayList<Soutenance>());
+                    }
+                    pvParProf.get(encadrant).add(s);
+                }
+
+                request.setAttribute("pvParProf", pvParProf);
+                request.setAttribute("sourceImport", true);
+                request.getRequestDispatcher("/WEB-INF/views/pvpage.jsp")
+                       .forward(request, response);
+                return;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("erreur",
+                    "Erreur lors de la lecture du fichier : " + e.getMessage());
+                request.getRequestDispatcher("/WEB-INF/views/importerPlanningPv.jsp")
+                       .forward(request, response);
+                return;
+            }
+        }
     }
  // ── Méthode helper : cellule d'en-tête ───────────────
     private void styleHeaderCell(XWPFTableCell cell, String text) {

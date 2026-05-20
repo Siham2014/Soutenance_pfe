@@ -9,6 +9,35 @@
 <link rel="stylesheet" href="<%=request.getContextPath()%>/static/css/bootstrap.min.css">
 
 <style>
+.topbar {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+}
+
+.topbar h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+}
+.back-btn {
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: .9rem;
+    transition: 0.3s;
+}
+
+.back-btn:hover {
+    background: rgba(255,255,255,.2);
+}
 
 body{
     background:#f5f7fb;
@@ -92,7 +121,10 @@ input[type="file"]:hover{
 </head>
 
 <body>
-
+<div class="topbar">
+    <h1> Tableau de Bord — Gestion des Soutenances PFE</h1>
+    <a href="<%=request.getContextPath()%>/app" class="back-btn">← Accueil</a>
+</div>
 <div class="import-container">
 
    

@@ -97,10 +97,10 @@
     </div>
 
     <!-- FEATURES -->
-    <div class="row mt-5 g-4">
+    <div class="row mt-5 g-4 justify-content-center">
 
         <!-- Encadrants -->
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card feature-card p-4 text-center">
                 <div class="icon-box text-danger">
                     <i class="bi bi-people-fill"></i>
@@ -125,7 +125,7 @@
         </div>
 
         <!-- Planning -->
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card feature-card p-4 text-center">
                 <div class="icon-box text-primary">
                     <i class="bi bi-calendar-event"></i>
@@ -146,6 +146,30 @@
                      Voir Planning
                 </a>
                 
+            </div>
+        </div>
+
+        <!-- PV depuis Planning -->
+        <div class="col-md-4">
+            <div class="card feature-card p-4 text-center">
+                <div class="icon-box text-success">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                </div>
+
+                <h4>Génération des PV</h4>
+                <p class="text-muted">
+                    Importez un planning exporté et générez les PV de soutenance
+                </p>
+
+                <a href="<%=request.getContextPath()%>/app?action=importerPlanningPv"
+                   class="btn btn-success btn-custom w-100 mb-2">
+                     Importer Planning &amp; Générer PV
+                </a>
+
+                <a href="<%=request.getContextPath()%>/app?action=listePv"
+                   class="btn btn-outline-success btn-custom w-100">
+                     Voir les PV existants
+                </a>
             </div>
         </div>
 
