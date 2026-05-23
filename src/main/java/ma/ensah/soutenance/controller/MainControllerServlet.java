@@ -542,9 +542,12 @@ public class MainControllerServlet extends HttpServlet {
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
             Map<Professeur, List<Etudiant>> repartition = new LinkedHashMap<>();
+
             for (GroupPfe g : groupes) {
                 Professeur prof = g.getEncadrant();
-                if (!repartition.containsKey(prof)) repartition.put(prof, new ArrayList<Etudiant>());
+                if (!repartition.containsKey(prof)) {
+                    repartition.put(prof, new ArrayList<Etudiant>());
+                }
                 repartition.get(prof).addAll(g.getEtudiants());
             }
 
@@ -554,52 +557,68 @@ public class MainControllerServlet extends HttpServlet {
             Workbook workbook = new XSSFWorkbook();
             Sheet sheet = workbook.createSheet("Répartition Encadrants");
 
-            // ── Police de base ───────────────────────────────────
             org.apache.poi.ss.usermodel.Font baseFont = workbook.createFont();
             baseFont.setFontName("Calibri");
             baseFont.setFontHeightInPoints((short) 10);
 
-            // ── Titre ────────────────────────────────────────────
-            org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
-            titleFont.setFontName("Calibri");
-            titleFont.setFontHeightInPoints((short) 16);
-            titleFont.setBold(true);
-            ((org.apache.poi.xssf.usermodel.XSSFFont) titleFont).setColor(
-                new org.apache.poi.xssf.usermodel.XSSFColor(
-                    new byte[]{(byte)31, (byte)111, (byte)191}, null));
+            CellStyle styleGI = createColorStyle(workbook, (byte)180, (byte)198, (byte)231, baseFont);
+            CellStyle styleID = createColorStyle(workbook, (byte)183, (byte)225, (byte)205, baseFont);
+            CellStyle styleTDIA = createColorStyle(workbook, (byte)244, (byte)177, (byte)131, baseFont);
+            CellStyle styleWhite = createColorStyle(workbook, (byte)255, (byte)255, (byte)255, baseFont);
+            CellStyle styleGray = createColorStyle(workbook, (byte)245, (byte)245, (byte)245, baseFont);
 
-            CellStyle titleStyle = workbook.createCellStyle();
-            titleStyle.setFont(titleFont);
-            titleStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+            org.apache.poi.ss.usermodel.Font boldFont = workbook.createFont();
+            boldFont.setFontName("Calibri");
+            boldFont.setBold(true);
+            boldFont.setFontHeightInPoints((short) 12);
+
+            CellStyle centerBold = workbook.createCellStyle();
+            centerBold.setFont(boldFont);
+            centerBold.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
 
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 9));
-            Row titleRow = sheet.createRow(0);
-            titleRow.setHeightInPoints(30);
-            Cell titleCell = titleRow.createCell(0);
-            titleCell.setCellValue("Répartition des Encadrants PFE");
-            titleCell.setCellStyle(titleStyle);
+            Row r0 = sheet.createRow(0);
+            Cell c0 = r0.createCell(0);
+            c0.setCellValue("Ecole Nationale des Sciences Appliquées - Al Hoceima");
+            c0.setCellStyle(centerBold);
 
-            // ── Sous-titre ───────────────────────────────────────
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 9));
-            Row subRow = sheet.createRow(1);
-            Cell subCell = subRow.createCell(0);
-            subCell.setCellValue("Total : " + repartition.size() + " encadrant(s)");
-            CellStyle subStyle = workbook.createCellStyle();
-            org.apache.poi.ss.usermodel.Font subFont = workbook.createFont();
-            subFont.setFontName("Calibri");
-            subFont.setItalic(true);
-            subFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.GREY_50_PERCENT.getIndex());
-            subStyle.setFont(subFont);
-            subCell.setCellStyle(subStyle);
+            Row r1 = sheet.createRow(1);
+            Cell c1 = r1.createCell(0);
+            c1.setCellValue("Département Mathématiques et Informatique");
+            c1.setCellStyle(centerBold);
 
-            sheet.createRow(2); // ligne vide
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(2, 2, 0, 9));
+            Row r2 = sheet.createRow(2);
+            Cell c2 = r2.createCell(0);
+            c2.setCellValue("Affectation des encadrants de Projet de Fin d'Etude");
+            c2.setCellStyle(centerBold);
 
-            // ── En-tête ──────────────────────────────────────────
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(3, 3, 0, 9));
+            Row r3 = sheet.createRow(3);
+            Cell c3 = r3.createCell(0);
+            c3.setCellValue("Année Universitaire 2025/2026");
+            c3.setCellStyle(centerBold);
+
+            Row l1 = sheet.createRow(5);
+            l1.createCell(4).setCellValue("");
+            l1.getCell(4).setCellStyle(styleTDIA);
+            l1.createCell(5).setCellValue("Filière TDIA");
+
+            Row l2 = sheet.createRow(6);
+            l2.createCell(4).setCellValue("");
+            l2.getCell(4).setCellStyle(styleID);
+            l2.createCell(5).setCellValue("Filière ID");
+
+            Row l3 = sheet.createRow(7);
+            l3.createCell(4).setCellValue("");
+            l3.getCell(4).setCellStyle(styleGI);
+            l3.createCell(5).setCellValue("Filière GI");
+
             org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
             headerFont.setFontName("Calibri");
             headerFont.setBold(true);
             headerFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
-            headerFont.setFontHeightInPoints((short) 10);
 
             CellStyle headerStyle = workbook.createCellStyle();
             headerStyle.setFont(headerFont);
@@ -614,39 +633,30 @@ public class MainControllerServlet extends HttpServlet {
             headerStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
             headerStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
-            Row headerRow = sheet.createRow(3);
-            headerRow.setHeightInPoints(22);
-            String[] cols = {"Encadrant Nom", "Encadrant Prénom",
-                             "Etudiant 1 Nom", "Etudiant 1 Prénom",
-                             "Etudiant 2 Nom", "Etudiant 2 Prénom",
-                             "Etudiant 3 Nom", "Etudiant 3 Prénom",
-                             "Etudiant 4 Nom", "Etudiant 4 Prénom"};
+            Row headerRow = sheet.createRow(9);
+            String[] cols = {
+                "Encadrant Nom", "Encadrant Prénom",
+                "Etudiant 1 Nom", "Etudiant 1 Prénom",
+                "Etudiant 2 Nom", "Etudiant 2 Prénom",
+                "Etudiant 3 Nom", "Etudiant 3 Prénom",
+                "Etudiant 4 Nom", "Etudiant 4 Prénom"
+            };
+
             for (int i = 0; i < cols.length; i++) {
                 Cell c = headerRow.createCell(i);
                 c.setCellValue(cols[i]);
                 c.setCellStyle(headerStyle);
             }
 
-            // ── Styles filières ──────────────────────────────────
-            CellStyle styleGI   = createColorStyle(workbook, (byte)180, (byte)198, (byte)231, baseFont);
-            CellStyle styleID   = createColorStyle(workbook, (byte)183, (byte)225, (byte)205, baseFont);
-            CellStyle styleTDIA = createColorStyle(workbook, (byte)244, (byte)177, (byte)131, baseFont);
-            CellStyle styleWhite = createColorStyle(workbook, (byte)255, (byte)255, (byte)255, baseFont);
-            CellStyle styleGray  = createColorStyle(workbook, (byte)245, (byte)245, (byte)245, baseFont);
-
-            // Style encadrant — bleu foncé
             org.apache.poi.ss.usermodel.Font encFont = workbook.createFont();
             encFont.setFontName("Calibri");
             encFont.setBold(true);
-            encFont.setFontHeightInPoints((short) 10);
             CellStyle styleEnc = createColorStyle(workbook, (byte)189, (byte)215, (byte)238, encFont);
 
-            // ── Lignes de données ────────────────────────────────
-            int rowIdx = 4;
+            int rowIdx = 10;
+
             for (Map.Entry<Professeur, List<Etudiant>> entry : repartition.entrySet()) {
                 Row row = sheet.createRow(rowIdx);
-                row.setHeightInPoints(18);
-
                 Professeur prof = entry.getKey();
                 List<Etudiant> etudiants = entry.getValue();
 
@@ -654,34 +664,44 @@ public class MainControllerServlet extends HttpServlet {
 
                 row.createCell(0).setCellValue(prof.getNom());
                 row.getCell(0).setCellStyle(styleEnc);
+
                 row.createCell(1).setCellValue(prof.getPrenom());
                 row.getCell(1).setCellStyle(styleEnc);
 
                 int col = 2;
+
                 for (int i = 0; i < 4; i++) {
                     if (i < etudiants.size()) {
                         Etudiant e = etudiants.get(i);
-                        String filiere = e.getFiliere();
-                        CellStyle cs = "GI".equalsIgnoreCase(filiere)   ? styleGI :
-                                       "ID".equalsIgnoreCase(filiere)   ? styleID :
-                                       "TDIA".equalsIgnoreCase(filiere) ? styleTDIA : rowBg;
+
+                        CellStyle cs =
+                            "GI".equalsIgnoreCase(e.getFiliere()) ? styleGI :
+                            "ID".equalsIgnoreCase(e.getFiliere()) ? styleID :
+                            "TDIA".equalsIgnoreCase(e.getFiliere()) ? styleTDIA :
+                            rowBg;
 
                         row.createCell(col).setCellValue(e.getNom());
                         row.getCell(col).setCellStyle(cs);
+
                         row.createCell(col + 1).setCellValue(e.getPrenom());
                         row.getCell(col + 1).setCellStyle(cs);
                     } else {
                         row.createCell(col).setCellValue("");
                         row.getCell(col).setCellStyle(rowBg);
+
                         row.createCell(col + 1).setCellValue("");
                         row.getCell(col + 1).setCellStyle(rowBg);
                     }
+
                     col += 2;
                 }
+
                 rowIdx++;
             }
 
-            for (int i = 0; i <= 9; i++) sheet.autoSizeColumn(i);
+            for (int i = 0; i <= 9; i++) {
+                sheet.autoSizeColumn(i);
+            }
 
             workbook.write(response.getOutputStream());
             workbook.close();
@@ -691,9 +711,12 @@ public class MainControllerServlet extends HttpServlet {
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
             Map<Professeur, List<Etudiant>> repartition = new LinkedHashMap<>();
+
             for (GroupPfe g : groupes) {
                 Professeur prof = g.getEncadrant();
-                if (!repartition.containsKey(prof)) repartition.put(prof, new ArrayList<Etudiant>());
+                if (!repartition.containsKey(prof)) {
+                    repartition.put(prof, new ArrayList<Etudiant>());
+                }
                 repartition.get(prof).addAll(g.getEtudiants());
             }
 
@@ -704,99 +727,136 @@ public class MainControllerServlet extends HttpServlet {
             PdfWriter.getInstance(document, response.getOutputStream());
             document.open();
 
-            // ── Titre ────────────────────────────────────────────
-            com.lowagie.text.Font titleFont = new com.lowagie.text.Font(
-                com.lowagie.text.Font.HELVETICA, 16, com.lowagie.text.Font.BOLD,
-                new java.awt.Color(31, 111, 191));
-            Paragraph title = new Paragraph("Répartition des Encadrants PFE", titleFont);
-            title.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
-            title.setSpacingAfter(6);
-            document.add(title);
+            java.awt.Color colorGI = new java.awt.Color(180, 198, 231);
+            java.awt.Color colorID = new java.awt.Color(183, 225, 205);
+            java.awt.Color colorTDIA = new java.awt.Color(244, 177, 131);
+            java.awt.Color colorEnc = new java.awt.Color(189, 215, 238);
+            java.awt.Color colorRow = new java.awt.Color(245, 245, 245);
 
-            com.lowagie.text.Font subFont = new com.lowagie.text.Font(
-                com.lowagie.text.Font.HELVETICA, 10, com.lowagie.text.Font.ITALIC,
-                java.awt.Color.GRAY);
-            Paragraph sub = new Paragraph("Total : " + repartition.size() + " encadrant(s)", subFont);
-            sub.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
-            sub.setSpacingAfter(12);
-            document.add(sub);
+            PdfPTable headerBox = new PdfPTable(1);
+            headerBox.setWidthPercentage(70);
 
-            // ── Tableau ──────────────────────────────────────────
+            PdfPCell headerCell = new PdfPCell();
+            headerCell.setPadding(8);
+
+            com.lowagie.text.Font headerBold =
+                new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 12, com.lowagie.text.Font.BOLD);
+
+            com.lowagie.text.Font headerNormal =
+                new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 10);
+
+            Paragraph h = new Paragraph();
+            h.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            h.add(new Phrase("Ecole Nationale des Sciences Appliquées - Al Hoceima\n", headerBold));
+            h.add(new Phrase("Département Mathématiques et Informatique\n", headerNormal));
+            h.add(new Phrase("Affectation des encadrants de Projet de Fin d'Etude\n", headerNormal));
+            h.add(new Phrase("Année Universitaire 2025/2026", headerNormal));
+
+            headerCell.addElement(h);
+            headerBox.addCell(headerCell);
+            document.add(headerBox);
+            document.add(new Paragraph(" "));
+
+            PdfPTable legend = new PdfPTable(2);
+            legend.setWidthPercentage(25);
+            legend.setWidths(new float[]{40, 60});
+
+            legend.addCell(getLegendPdfCell("", colorTDIA));
+            legend.addCell(getLegendPdfCell("Filière TDIA", java.awt.Color.WHITE));
+
+            legend.addCell(getLegendPdfCell("", colorID));
+            legend.addCell(getLegendPdfCell("Filière ID", java.awt.Color.WHITE));
+
+            legend.addCell(getLegendPdfCell("", colorGI));
+            legend.addCell(getLegendPdfCell("Filière GI", java.awt.Color.WHITE));
+
+            document.add(legend);
+            document.add(new Paragraph(" "));
+
             PdfPTable table = new PdfPTable(10);
             table.setWidthPercentage(100);
             table.setWidths(new float[]{2f, 2f, 1.8f, 1.8f, 1.8f, 1.8f, 1.8f, 1.8f, 1.8f, 1.8f});
 
-            // En-tête
             java.awt.Color headerColor = new java.awt.Color(31, 111, 191);
-            com.lowagie.text.Font headerFont = new com.lowagie.text.Font(
-                com.lowagie.text.Font.HELVETICA, 8, com.lowagie.text.Font.BOLD, java.awt.Color.WHITE);
 
-            String[] headers = {"Encadrant Nom", "Encadrant Prénom",
-                                "Etudiant 1 Nom", "Etudiant 1 Prénom",
-                                "Etudiant 2 Nom", "Etudiant 2 Prénom",
-                                "Etudiant 3 Nom", "Etudiant 3 Prénom",
-                                "Etudiant 4 Nom", "Etudiant 4 Prénom"};
-            for (String h : headers) {
-                PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
+            com.lowagie.text.Font headerFont =
+                new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 8, com.lowagie.text.Font.BOLD, java.awt.Color.WHITE);
+
+            String[] headers = {
+                "Encadrant Nom", "Encadrant Prénom",
+                "Etudiant 1 Nom", "Etudiant 1 Prénom",
+                "Etudiant 2 Nom", "Etudiant 2 Prénom",
+                "Etudiant 3 Nom", "Etudiant 3 Prénom",
+                "Etudiant 4 Nom", "Etudiant 4 Prénom"
+            };
+
+            for (String txt : headers) {
+                PdfPCell cell = new PdfPCell(new Phrase(txt, headerFont));
                 cell.setBackgroundColor(headerColor);
                 cell.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
                 cell.setPadding(5);
                 table.addCell(cell);
             }
 
-            // Couleurs
-            java.awt.Color colorGI   = new java.awt.Color(180, 198, 231);
-            java.awt.Color colorID   = new java.awt.Color(183, 225, 205);
-            java.awt.Color colorTDIA = new java.awt.Color(244, 177, 131);
-            java.awt.Color colorEnc  = new java.awt.Color(189, 215, 238);
-            java.awt.Color colorRow  = new java.awt.Color(245, 245, 245);
+            com.lowagie.text.Font cellFont =
+                new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 8);
 
-            com.lowagie.text.Font cellFont = new com.lowagie.text.Font(
-                com.lowagie.text.Font.HELVETICA, 8);
-            com.lowagie.text.Font boldFont = new com.lowagie.text.Font(
-                com.lowagie.text.Font.HELVETICA, 8, com.lowagie.text.Font.BOLD);
+            com.lowagie.text.Font boldFont =
+                new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 8, com.lowagie.text.Font.BOLD);
 
             int rowNum = 0;
+
             for (Map.Entry<Professeur, List<Etudiant>> entry : repartition.entrySet()) {
+
                 Professeur prof = entry.getKey();
                 List<Etudiant> etudiants = entry.getValue();
+
                 java.awt.Color bg = (rowNum % 2 == 0) ? java.awt.Color.WHITE : colorRow;
 
-                // Encadrant — bleu
                 PdfPCell cNom = new PdfPCell(new Phrase(prof.getNom(), boldFont));
-                cNom.setBackgroundColor(colorEnc); cNom.setPadding(4);
+                cNom.setBackgroundColor(colorEnc);
                 cNom.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+                cNom.setPadding(4);
                 table.addCell(cNom);
 
                 PdfPCell cPrenom = new PdfPCell(new Phrase(prof.getPrenom(), boldFont));
-                cPrenom.setBackgroundColor(colorEnc); cPrenom.setPadding(4);
+                cPrenom.setBackgroundColor(colorEnc);
                 cPrenom.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+                cPrenom.setPadding(4);
                 table.addCell(cPrenom);
 
-                // Étudiants
                 for (int i = 0; i < 4; i++) {
                     if (i < etudiants.size()) {
                         Etudiant e = etudiants.get(i);
-                        java.awt.Color fc = "GI".equalsIgnoreCase(e.getFiliere())   ? colorGI :
-                                            "ID".equalsIgnoreCase(e.getFiliere())   ? colorID :
-                                            "TDIA".equalsIgnoreCase(e.getFiliere()) ? colorTDIA : bg;
+
+                        java.awt.Color fc =
+                            "GI".equalsIgnoreCase(e.getFiliere()) ? colorGI :
+                            "ID".equalsIgnoreCase(e.getFiliere()) ? colorID :
+                            "TDIA".equalsIgnoreCase(e.getFiliere()) ? colorTDIA :
+                            bg;
 
                         PdfPCell cn = new PdfPCell(new Phrase(e.getNom(), cellFont));
-                        cn.setBackgroundColor(fc); cn.setPadding(4);
+                        cn.setBackgroundColor(fc);
                         cn.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+                        cn.setPadding(4);
                         table.addCell(cn);
 
                         PdfPCell cp = new PdfPCell(new Phrase(e.getPrenom(), cellFont));
-                        cp.setBackgroundColor(fc); cp.setPadding(4);
+                        cp.setBackgroundColor(fc);
                         cp.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+                        cp.setPadding(4);
                         table.addCell(cp);
                     } else {
-                        PdfPCell empty = new PdfPCell(new Phrase(""));
-                        empty.setBackgroundColor(bg); empty.setPadding(4);
-                        table.addCell(empty);
-                        table.addCell(empty);
+                        PdfPCell empty1 = new PdfPCell(new Phrase(""));
+                        empty1.setBackgroundColor(bg);
+                        table.addCell(empty1);
+
+                        PdfPCell empty2 = new PdfPCell(new Phrase(""));
+                        empty2.setBackgroundColor(bg);
+                        table.addCell(empty2);
                     }
                 }
+
                 rowNum++;
             }
 
@@ -808,9 +868,12 @@ public class MainControllerServlet extends HttpServlet {
 
             List<GroupPfe> groupes = groupPfeDao.findAllWithDetails();
             Map<Professeur, List<Etudiant>> repartition = new LinkedHashMap<>();
+
             for (GroupPfe g : groupes) {
                 Professeur prof = g.getEncadrant();
-                if (!repartition.containsKey(prof)) repartition.put(prof, new ArrayList<Etudiant>());
+                if (!repartition.containsKey(prof)) {
+                    repartition.put(prof, new ArrayList<Etudiant>());
+                }
                 repartition.get(prof).addAll(g.getEtudiants());
             }
 
@@ -819,80 +882,115 @@ public class MainControllerServlet extends HttpServlet {
 
             XWPFDocument document = new XWPFDocument();
 
-            // ── Titre ────────────────────────────────────────────
-            XWPFParagraph titlePara = document.createParagraph();
-            titlePara.setAlignment(org.apache.poi.xwpf.usermodel.ParagraphAlignment.CENTER);
-            XWPFRun titleRun = titlePara.createRun();
-            titleRun.setText("Répartition des Encadrants PFE");
-            titleRun.setBold(true);
-            titleRun.setFontSize(18);
-            titleRun.setColor("1F6FBF");
-            titleRun.setFontFamily("Calibri");
+            XWPFTable headerTable = document.createTable(1, 1);
+            headerTable.setWidth("70%");
 
-            // ── Sous-titre ───────────────────────────────────────
-            XWPFParagraph subPara = document.createParagraph();
-            subPara.setAlignment(org.apache.poi.xwpf.usermodel.ParagraphAlignment.CENTER);
-            XWPFRun subRun = subPara.createRun();
-            subRun.setText("Total : " + repartition.size() + " encadrant(s)");
-            subRun.setFontSize(10);
-            subRun.setColor("888888");
-            subRun.setFontFamily("Calibri");
+            XWPFTableCell headerCell = headerTable.getRow(0).getCell(0);
+            headerCell.setColor("FFFFFF");
 
-            document.createParagraph(); // espace
+            XWPFParagraph hp = headerCell.getParagraphs().get(0);
+            hp.setAlignment(org.apache.poi.xwpf.usermodel.ParagraphAlignment.CENTER);
 
-            // ── Tableau ──────────────────────────────────────────
+            XWPFRun r1 = hp.createRun();
+            r1.setText("Ecole Nationale des Sciences Appliquées - Al Hoceima");
+            r1.setBold(true);
+            r1.setFontSize(12);
+            r1.setFontFamily("Calibri");
+            r1.addBreak();
+
+            XWPFRun r2 = hp.createRun();
+            r2.setText("Département Mathématiques et Informatique");
+            r2.setFontSize(11);
+            r2.setFontFamily("Calibri");
+            r2.addBreak();
+
+            XWPFRun r3 = hp.createRun();
+            r3.setText("Affectation des encadrants de Projet de Fin d'Etude");
+            r3.setFontSize(10);
+            r3.setFontFamily("Calibri");
+            r3.addBreak();
+
+            XWPFRun r4 = hp.createRun();
+            r4.setText("Année Universitaire 2025/2026");
+            r4.setFontSize(10);
+            r4.setFontFamily("Calibri");
+
+            document.createParagraph();
+
+            XWPFTable legendTable = document.createTable(3, 2);
+            legendTable.setWidth("25%");
+
+            styleLegendCell(legendTable.getRow(0).getCell(0), "", "F4B183");
+            styleLegendCell(legendTable.getRow(0).getCell(1), "Filière TDIA", "FFFFFF");
+
+            styleLegendCell(legendTable.getRow(1).getCell(0), "", "B7E1CD");
+            styleLegendCell(legendTable.getRow(1).getCell(1), "Filière ID", "FFFFFF");
+
+            styleLegendCell(legendTable.getRow(2).getCell(0), "", "B4C6E7");
+            styleLegendCell(legendTable.getRow(2).getCell(1), "Filière GI", "FFFFFF");
+
+            document.createParagraph();
+
             XWPFTable table = document.createTable();
 
-            // En-tête
             XWPFTableRow hRow = table.getRow(0);
-            String[] hCols = {"Encadrant Nom", "Encadrant Prénom",
-                              "Etudiant 1 Nom", "Etudiant 1 Prénom",
-                              "Etudiant 2 Nom", "Etudiant 2 Prénom",
-                              "Etudiant 3 Nom", "Etudiant 3 Prénom",
-                              "Etudiant 4 Nom", "Etudiant 4 Prénom"};
+
+            String[] hCols = {
+                "Encadrant Nom", "Encadrant Prénom",
+                "Etudiant 1 Nom", "Etudiant 1 Prénom",
+                "Etudiant 2 Nom", "Etudiant 2 Prénom",
+                "Etudiant 3 Nom", "Etudiant 3 Prénom",
+                "Etudiant 4 Nom", "Etudiant 4 Prénom"
+            };
 
             styleHeaderCell(hRow.getCell(0), hCols[0]);
+
             for (int i = 1; i < hCols.length; i++) {
                 styleHeaderCell(hRow.addNewTableCell(), hCols[i]);
             }
 
-            // Lignes de données
             int rowNum = 0;
+
             for (Map.Entry<Professeur, List<Etudiant>> entry : repartition.entrySet()) {
                 Professeur prof = entry.getKey();
                 List<Etudiant> etudiants = entry.getValue();
 
                 XWPFTableRow row = table.createRow();
+
                 String bgAlt = (rowNum % 2 == 0) ? "FFFFFF" : "F5F5F5";
 
-                // Encadrant — bleu
-                styleDataCell(row.getCell(0), prof.getNom(),    "BDD7EE", true);
+                styleDataCell(row.getCell(0), prof.getNom(), "BDD7EE", true);
                 styleDataCell(row.getCell(1), prof.getPrenom(), "BDD7EE", true);
 
                 int col = 2;
+
                 for (int i = 0; i < 4; i++) {
                     if (i < etudiants.size()) {
                         Etudiant e = etudiants.get(i);
-                        String fc = "GI".equalsIgnoreCase(e.getFiliere())   ? "B4C6E7" :
-                                    "ID".equalsIgnoreCase(e.getFiliere())   ? "B7E1CD" :
-                                    "TDIA".equalsIgnoreCase(e.getFiliere()) ? "F4B183" : bgAlt;
 
-                        styleDataCell(row.getCell(col),     e.getNom(),    fc, false);
+                        String fc =
+                            "GI".equalsIgnoreCase(e.getFiliere()) ? "B4C6E7" :
+                            "ID".equalsIgnoreCase(e.getFiliere()) ? "B7E1CD" :
+                            "TDIA".equalsIgnoreCase(e.getFiliere()) ? "F4B183" :
+                            bgAlt;
+
+                        styleDataCell(row.getCell(col), e.getNom(), fc, false);
                         styleDataCell(row.getCell(col + 1), e.getPrenom(), fc, false);
                     } else {
-                        styleDataCell(row.getCell(col),     "", bgAlt, false);
+                        styleDataCell(row.getCell(col), "", bgAlt, false);
                         styleDataCell(row.getCell(col + 1), "", bgAlt, false);
                     }
+
                     col += 2;
                 }
+
                 rowNum++;
             }
 
             document.write(response.getOutputStream());
             document.close();
             return;
-        
-    } else if ("genererPv".equals(action)) {
+        } else if ("genererPv".equals(action)) {
 
         String idParam = request.getParameter("id");
 
@@ -1305,4 +1403,23 @@ style.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 style.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 return style;
 }
+    private PdfPCell getLegendPdfCell(String text, java.awt.Color color) {
+        PdfPCell cell = new PdfPCell(new Phrase(text));
+        cell.setBackgroundColor(color);
+        cell.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
+        cell.setPadding(4);
+        return cell;
+    }
+
+    private void styleLegendCell(XWPFTableCell cell, String text, String bgColor) {
+        cell.setColor(bgColor);
+
+        XWPFParagraph p = cell.getParagraphs().get(0);
+        p.setAlignment(org.apache.poi.xwpf.usermodel.ParagraphAlignment.LEFT);
+
+        XWPFRun run = p.createRun();
+        run.setText(text);
+        run.setFontSize(9);
+        run.setFontFamily("Calibri");
+    }  
 }
